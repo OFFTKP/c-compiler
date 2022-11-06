@@ -1,20 +1,16 @@
 #include <lexer/lexer.hxx>
 #include <preprocessor/preprocessor.hxx>
+#include <common/test_base.hxx>
 #include <filesystem>
-#include <cppunit/TestFixture.h>
-#include <cppunit/extensions/HelperMacros.h>
 #include <tuple>
 #include <vector>
 
 // Should be defined in cmake
-#ifndef DATA_DIRECTORY
-#define DATA_DIRECTORY ""
-#endif
 #ifndef DATA_FILES
 #define DATA_FILES ""
 #endif
 
-class TestLexer : public CppUnit::TestFixture {
+class TestLexer : public TestBase {
     std::vector<std::tuple<Token, std::string>> lexFile(std::string src);
     void lexTestFiles();
     CPPUNIT_TEST_SUITE(TestLexer);
@@ -36,8 +32,7 @@ std::vector<std::tuple<Token, std::string>> TestLexer::lexFile(std::string src) 
 }
 
 void TestLexer::lexTestFiles() {
-    std::vector<std::string> files = { DATA_FILES };
-    CPPUNIT_ASSERT_GREATER(size_t(0), files.size());
+    const auto& files = getDataFiles();
     for (auto& path : files) {
         std::cout << "Now testing: " << path << std::endl;
         CPPUNIT_ASSERT(std::filesystem::is_regular_file(path));

@@ -19,14 +19,13 @@ std::tuple<Token, std::string> Lexer::GetNextToken() {
     while (index_ != input_.end()) {
         if (!check(*index_)) {
             ++index_;
-            if (is_string_literal_)
-                return { Token::StringLiteral, next_token_string_ };
-            else
-                return { get_type(), next_token_string_ };
+            return { get_type(), next_token_string_ };
         } else {
             ++index_;
         }
     }
+    if (is_string_literal_)
+        throw std::runtime_error("Unfinished string literal!");
     return { Token::Eof, "" };
 }
 
@@ -40,22 +39,19 @@ char Lexer::prev() {
 
 // Check if character belongs to current token
 bool Lexer::check(char c) {
-    Token detected;
-
     if (is_string_literal_) {
-        if (c == '"' && prev() != '\\') {
-            is_string_literal_ = false;
+        if (c == '"' && prev() != '\\')
             return false;
-        }
         // Add any character other than " to the string
+        next_token_string_ += c;
         return true;
     }
 
-    if (c == ' ')
+    if (c == ' ' || c == '\t' || c == '\n')
         return next_token_string_.empty();
 
     if (std::regex_match(std::string(1, c), std::regex("[A-Za-z0-9_]"))) {
-        next_token_string_ += *index_;
+        next_token_string_ += c;
         return true;
     }
 
@@ -67,12 +63,12 @@ bool Lexer::check(char c) {
     switch (c) {
         case '>':
         case '<': {
-            next_token_string_ += *index_;
+            next_token_string_ += c;
             char n = peek(1);
             if (n == c) {
                 ++index_;
-                next_token_string_ += *index_;
-                char n2 = peek(2);
+                next_token_string_ += c;
+                char n2 = peek(1);
                 if (n2 == '=') {
                     ++index_;
                     next_token_string_ += *index_;
@@ -83,10 +79,10 @@ bool Lexer::check(char c) {
         case '=':
         case '%':
         case '*':
+        case '^':
         case '/':
-        case '!':
-        case '~': {
-            next_token_string_ += *index_;
+        case '!': {
+            next_token_string_ += c;
             char n = peek(1);
             if (n == '=') {
                 ++index_;
@@ -96,7 +92,7 @@ bool Lexer::check(char c) {
         }
         case '-':
         case '+': {
-            next_token_string_ += *index_;
+            next_token_string_ += c;
             char n = peek(1);
             if (n == '=' || n == c || (n == '>' && c == '-')) {
                 ++index_;
@@ -106,7 +102,7 @@ bool Lexer::check(char c) {
         }
         case '|':
         case '&': {
-            next_token_string_ += *index_;
+            next_token_string_ += c;
             char n = peek(1);
             if (n == '=' || n == c) {
                 ++index_;
@@ -114,7 +110,7 @@ bool Lexer::check(char c) {
             }
             return false;
         }
-        case '^':
+        case '~':
         case '?': 
         case ':':
         case ';':
@@ -126,7 +122,7 @@ bool Lexer::check(char c) {
         case '}': 
         case '[':
         case ']': {
-            next_token_string_ += *index_;
+            next_token_string_ += c;
             return false;
         }
         case '"': {
@@ -142,13 +138,65 @@ bool Lexer::check(char c) {
 }
 
 Token Lexer::get_type() {
-    if (next_token_string_ == "int") {
+    #define match(str) std::regex_match(next_token_string_, std::regex(str))
+    #define matchw(str) next_token_string_ == str
+    if (is_string_literal_) {
+        is_string_literal_ = false;
+        return Token::StringLiteral;
+    } else if (matchw("char")) {
+        return Token::Char;
+    } else if (matchw("const")) {
+        return Token::Const;
+    } else if (matchw("if")) {
+        return Token::If;
+    } else if (matchw("int")) {
         return Token::Int;
-    } else if (std::regex_match(next_token_string_, std::regex("[A-Za-z_][A-Za-z0-9_]*"))) {
-        return Token::IntegerConstant;
-    } else if (std::regex_match(next_token_string_, std::regex("[0-9]+"))) {
+    } else if (matchw("return")) {
+        return Token::Return;
+    } else if (match("")) {
+    } else if (matchw(">>=")) {
+        return Token::RightAssign;
+    } else if (matchw("<<=")) {
+        return Token::LeftAssign;
+    } else if (matchw("+=")) {
+        return Token::AddAssign;
+    } else if (matchw("-=")) {
+        return Token::SubAssign;
+    } else if (matchw("*=")) {
+        return Token::MulAssign;
+    } else if (matchw("/=")) {
+        return Token::DivAssign;
+    } else if (matchw("%=")) {
+        return Token::ModAssign;
+    } else if (matchw("&=")) {
+        return Token::AndAssign;
+    } else if (matchw("^=")) {
+        return Token::XorAssign;
+    } else if (matchw("|=")) {
+        return Token::OrAssign;
+    } else if (matchw("++")) {
+        return Token::IncOp;
+    } else if (matchw("--")) {
+        return Token::DecOp;
+    } else if (matchw("==")) {
+        return Token::EqOp;
+    } else if (matchw("!=")) {
+        return Token::NeOp;
+    } else if (matchw("||")) {
+        return Token::OrOp;
+    } else if (matchw("&&")) {
+        return Token::IncOp;
+    } else if (matchw(">=")) {
+        return Token::GeOp;
+    } else if (matchw("<=")) {
+        return Token::LeOp;
+    } else if (match("[;\\{\\},:=\\(\\)\\[\\].&!~\\-\\+\\*/%<>^\\|?]")) {
+        return Token::Punctuator; 
+    } else if (match("[A-Za-z_][A-Za-z0-9_]*")) {
         return Token::Identifier;
+    } else if (match("[0-9]+")) {
+        return Token::IntegerConstant;
     }
-    return Token::Empty;
+    #undef match
     throw std::runtime_error("Unknown token:" + next_token_string_);
 }

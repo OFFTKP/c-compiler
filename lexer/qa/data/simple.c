@@ -2,6 +2,8 @@ int main(int argc, char** argv) {
     int i = 1000;
     i++; ++i;
     i--; --i;
+    i >>= 1;
+    i <<= 2;
     i += 1; i -= 1;
     if (i == 1 || i != 2)
         return 0;

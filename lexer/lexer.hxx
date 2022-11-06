@@ -2,7 +2,7 @@
 #define LEXER_HXX
 #include <string>
 #include <tuple>
-#include "../token/token.hxx"
+#include <token/token.hxx>
 
 class Lexer {
 public:
