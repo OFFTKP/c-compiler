@@ -12,7 +12,8 @@ Lexer::Lexer(const std::string& input)
 
 Lexer::~Lexer() {}
 
-std::tuple<Token, std::string> Lexer::GetNextToken() {
+std::tuple<Token, std::string> Lexer::GetNextToken()
+{
     ScopeGuard guard([&]() {
         next_token_string_ = "";
     });
@@ -38,7 +39,8 @@ char Lexer::prev() {
 }
 
 // Check if character belongs to current token
-bool Lexer::check(char c) {
+bool Lexer::check(char c)
+{
     if (is_string_literal_) {
         if (c == '"' && prev() != '\\')
             return false;
@@ -137,7 +139,8 @@ bool Lexer::check(char c) {
     return true;
 }
 
-Token Lexer::get_type() {
+Token Lexer::get_type()
+{
     #define match(str) std::regex_match(next_token_string_, std::regex(str))
     #define matchw(str) next_token_string_ == str
     if (is_string_literal_) {
