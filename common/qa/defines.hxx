@@ -1,0 +1,4 @@
+#ifndef QA_VARIABLES_HXX
+#define QA_VARIABLES_HXX
+#define __TEST_PASSED "__TEST_PASSED"
+#endif

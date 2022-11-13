@@ -5,9 +5,9 @@ cmake_path(GET ProcessorPath PARENT_PATH RootPath)
 project(TestPreprocessor)
 add_executable(
     TestPreprocessor 
-    ${RootPath}/common/test_runner.cxx
+    ${RootPath}/common/qa/test_runner.cxx
     ${RootPath}/preprocessor/qa/test_preprocessor.cxx
-    ${RootPath}/common/test_base.cxx
+    ${RootPath}/common/qa/test_base.cxx
     ${RootPath}/preprocessor/preprocessor.cxx
 )
 target_include_directories(TestPreprocessor PUBLIC ${RootPath}/)

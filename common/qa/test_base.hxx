@@ -9,6 +9,7 @@ class TestBase : public CppUnit::TestFixture {
 
 protected:
     const std::vector<std::string>& getDataFiles();
+    const std::vector<std::string>& getErrorFiles();
 private:
     std::vector<std::string> data_files_;
 };

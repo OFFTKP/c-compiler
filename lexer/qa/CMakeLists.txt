@@ -5,9 +5,9 @@ cmake_path(GET LexerPath PARENT_PATH RootPath)
 project(TestLexer)
 add_executable(
     TestLexer 
-    ${RootPath}/common/test_runner.cxx
+    ${RootPath}/common/qa/test_runner.cxx
     ${RootPath}/lexer/qa/test_lexer.cxx
-    ${RootPath}/common/test_base.cxx
+    ${RootPath}/common/qa/test_base.cxx
     ${RootPath}/lexer/lexer.cxx
     ${RootPath}/preprocessor/preprocessor.cxx
 )

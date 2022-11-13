@@ -1,6 +1,6 @@
 #include <lexer/lexer.hxx>
 #include <preprocessor/preprocessor.hxx>
-#include <common/test_base.hxx>
+#include <common/qa/test_base.hxx>
 #include <filesystem>
 #include <tuple>
 #include <vector>

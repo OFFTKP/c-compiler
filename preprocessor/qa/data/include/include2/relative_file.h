@@ -1,0 +1,1 @@
+#define __TEST_PASSED
