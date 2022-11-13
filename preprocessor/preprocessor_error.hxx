@@ -6,6 +6,7 @@
 enum class PreprocessorError {
     IncludeDepth,
     IncludeNotFound,
+    Directive,
 
     Placeholder,
 };
@@ -15,6 +16,7 @@ static PreprocessorError getExpectedError(std::string define) {
     switch (hash(define.c_str())) {
         case hash("__TEST_ERROR_INCLUDE_DEPTH"): return PreprocessorError::IncludeDepth;
         case hash("__TEST_ERROR_NOT_FOUND"): return PreprocessorError::IncludeNotFound;
+        case hash("__TEST_ERROR_DIRECTIVE"): return PreprocessorError::Directive;
         default: return PreprocessorError::Placeholder;
     }
 }

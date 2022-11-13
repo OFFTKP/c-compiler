@@ -2,7 +2,7 @@
 #include <regex>
 #include <iostream>
 #include <iomanip>
-#include <common/error.hxx>
+#include <common/log.hxx>
 #include <misc/scope_guard.hxx>
 
 Lexer::Lexer(const std::string& input)

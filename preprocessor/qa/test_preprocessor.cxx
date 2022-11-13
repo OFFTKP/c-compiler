@@ -1,27 +1,26 @@
 #include <preprocessor/preprocessor.hxx>
 #include <common/qa/test_base.hxx>
 #include <common/qa/defines.hxx>
+#include <common/state.hxx>
 #include <filesystem>
 
 class TestPreprocessor : public TestBase {
-    void preprocessTestFiles();
+    void preprocessConditionalCompilationFiles();
     void preprocessErrorFiles();
+    void preprocessPredefinedMacroFiles();
     CPPUNIT_TEST_SUITE(TestPreprocessor);
-    CPPUNIT_TEST(preprocessTestFiles);
+    CPPUNIT_TEST(preprocessConditionalCompilationFiles);
     CPPUNIT_TEST(preprocessErrorFiles);
+    CPPUNIT_TEST(preprocessPredefinedMacroFiles);
     CPPUNIT_TEST_SUITE_END();
+
+    inline std::string getSource(std::string path);
 };
 
-void TestPreprocessor::preprocessTestFiles() {
-    const auto& files = getDataFiles();
+void TestPreprocessor::preprocessConditionalCompilationFiles() {
+    const auto& files = getDataFiles("conditional_compilation");
     for (auto& path : files) {
-        std::cout << "Now testing: " << path << std::endl;
-        CPPUNIT_ASSERT(std::filesystem::is_regular_file(path));
-        std::ifstream ifs(path);
-        CPPUNIT_ASSERT(ifs.is_open() && ifs.good());
-        std::stringstream ss;
-        ss << ifs.rdbuf();
-        std::string str = ss.str();
+        auto str = getSource(path);
         Preprocessor preprocessor(str, path);
         preprocessor.Process();
         std::string message = "Failed file: " + path;
@@ -40,15 +39,9 @@ void TestPreprocessor::preprocessTestFiles() {
 }
 
 void TestPreprocessor::preprocessErrorFiles() {
-    const auto& files = getErrorFiles();
+    const auto& files = getDataFiles("must_error");
     for (auto& path : files) {
-        std::cout << "Now testing: " << path << std::endl;
-        CPPUNIT_ASSERT(std::filesystem::is_regular_file(path));
-        std::ifstream ifs(path);
-        CPPUNIT_ASSERT(ifs.is_open() && ifs.good());
-        std::stringstream ss;
-        ss << ifs.rdbuf();
-        std::string str = ss.str();
+        auto str = getSource(path);
         Preprocessor preprocessor(str, path);
         try {
             preprocessor.Process();
@@ -70,6 +63,66 @@ void TestPreprocessor::preprocessErrorFiles() {
         std::string message = "File did not error: " + path;
         CPPUNIT_ASSERT_MESSAGE(message, false);
     }
+}
+
+void TestPreprocessor::preprocessPredefinedMacroFiles() {
+    const auto& path = getDataPath() + "/predefined_macros/";
+    {
+        auto cur_path = path + "date.c";
+        auto str = getSource(cur_path);
+        Preprocessor preprocessor(str, cur_path);
+        auto actual = preprocessor.Process();
+        auto time = std::time(nullptr);
+        auto localtime = *std::localtime(&time);
+        std::stringstream ss;
+        ss << '"' << std::put_time(&localtime, "%b %d %Y") << "\"\n";
+        std::string expected = ss.str();
+        CPPUNIT_ASSERT_EQUAL_MESSAGE("Dates don't match!", expected, actual);
+    }
+    {
+        auto cur_path = path + "time.c";
+        auto str = getSource(cur_path);
+        Preprocessor preprocessor(str, cur_path);
+        auto actual = preprocessor.Process();
+        auto time = std::time(nullptr);
+        auto localtime = *std::localtime(&time);
+        std::stringstream ss;
+        ss << '"' << std::put_time(&localtime, "%H:%M:%S") << "\"\n";
+        std::string expected = ss.str();
+        CPPUNIT_ASSERT_EQUAL_MESSAGE("Times don't match!", expected, actual);
+    }
+    {
+        auto cur_path = path + "file.c";
+        auto str = getSource(cur_path);
+        Preprocessor preprocessor(str, cur_path);
+        auto actual = preprocessor.Process();
+        std::stringstream ss;
+        ss << '"' << cur_path << "\"\n";
+        std::string expected = ss.str();
+        CPPUNIT_ASSERT_EQUAL_MESSAGE("File paths don't match!", expected, actual);
+    }
+    {
+        auto cur_path = path + "line.c";
+        auto str = getSource(cur_path);
+        Preprocessor preprocessor(str, cur_path);
+        auto actual = preprocessor.Process();
+        std::string expected = 
+            "int a = 1;\n"
+            "int some_func() {\n"
+            "    return 1;\n"
+            "}\n"
+            "int b = 3;\n";
+        CPPUNIT_ASSERT_EQUAL_MESSAGE("Line numbers don't match!", expected, actual);
+    }
+}
+
+std::string TestPreprocessor::getSource(std::string path) {
+    CPPUNIT_ASSERT(std::filesystem::is_regular_file(path));
+    std::ifstream ifs(path);
+    CPPUNIT_ASSERT(ifs.is_open() && ifs.good());
+    std::stringstream ss;
+    ss << ifs.rdbuf();
+    return ss.str();
 }
 
 CPPUNIT_TEST_SUITE_REGISTRATION(TestPreprocessor);

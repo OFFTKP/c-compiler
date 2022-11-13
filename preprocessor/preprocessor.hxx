@@ -1,6 +1,6 @@
 #ifndef PREPROCESSOR_HXX
 #define PREPROCESSOR_HXX
-#include <preprocessor/preprocessor_error.hxx>
+#include <preprocessor/preprocessor_log.hxx>
 #include <optional>
 #include <vector>
 #include <string>
@@ -8,7 +8,7 @@
 #include <unordered_map>
 
 struct Preprocessor {
-    Preprocessor(const std::string& input, std::filesystem::path current_path);
+    Preprocessor(const std::string& input, std::filesystem::path path);
     ~Preprocessor();
 
     std::string Process();
@@ -19,14 +19,18 @@ struct Preprocessor {
     const auto& GetDefines() { return defines_; }
 private:
     std::string remove_comments(const std::string& input);
-    std::string process_impl(const std::string& input, std::filesystem::path current_path);
+    void process_impl(const std::string& input, std::filesystem::path current_path);
     size_t include_impl(std::vector<std::string>& lines, std::filesystem::path path, size_t i);
-    void throw_error(PreprocessorError error, std::filesystem::path path, size_t line);
+    void replace_predefined_macros(std::string&);
+    void throw_error(PreprocessorError error, std::string message = "");
 
     const std::string& input_;
     std::unordered_map<std::string, std::string> defines_;
-    const std::filesystem::path current_path_;
+    const std::filesystem::path first_file_path_;
+    std::filesystem::path current_path_;
+    size_t current_line_ = 0;
     int current_include_depth_ = 0;
+    std::stringstream out_stream_;
     std::optional<PreprocessorError> current_error_ = std::nullopt;
 };
 #endif
