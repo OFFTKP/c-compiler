@@ -2,11 +2,6 @@
 #include <common/test_base.hxx>
 #include <filesystem>
 
-// Should be defined in cmake
-#ifndef DATA_FILES
-#define DATA_FILES ""
-#endif
-
 class TestPreprocessor : public TestBase {
     void preprocessTestFiles();
     CPPUNIT_TEST_SUITE(TestPreprocessor);
@@ -15,8 +10,7 @@ class TestPreprocessor : public TestBase {
 };
 
 void TestPreprocessor::preprocessTestFiles() {
-    std::vector<std::string> files = { DATA_FILES };
-    CPPUNIT_ASSERT_GREATER(size_t(0), files.size());
+    const auto& files = getDataFiles();
     for (auto& path : files) {
         std::cout << "Now testing: " << path << std::endl;
         CPPUNIT_ASSERT(std::filesystem::is_regular_file(path));
@@ -24,8 +18,22 @@ void TestPreprocessor::preprocessTestFiles() {
         CPPUNIT_ASSERT(ifs.is_open() && ifs.good());
         std::stringstream ss;
         ss << ifs.rdbuf();
-        auto out = Preprocessor::Process(ss.str());
-        std::cout << out << std::endl;
-        CPPUNIT_ASSERT(false);
+        std::string str = ss.str();
+        Preprocessor preprocessor(str, path);
+        preprocessor.Process();
+        std::string message = "Failed file: " + path;
+        bool passed = preprocessor.IsDefined("passed");
+        if (!passed) {
+            // Dump definitions
+            const auto& defines = preprocessor.GetDefines();
+            int i = 1;
+            if (defines.empty())
+                std::cout << "Defines are empty!" << std::endl;
+            else for (const auto& [key, value] : defines)
+                std::cout << i++ << ". " << key << ": " << value << std::endl;
+        }
+        CPPUNIT_ASSERT_MESSAGE(message, passed);
     }
 }
+
+CPPUNIT_TEST_SUITE_REGISTRATION(TestPreprocessor);

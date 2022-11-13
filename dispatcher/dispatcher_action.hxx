@@ -19,7 +19,7 @@ struct Action
 protected:
     std::string args_;
 };
-
+#elif defined a
 ACTION(LexerAction,
     if (std::filesystem::is_regular_file(args_)) {
         std::ifstream ifs(args_);
@@ -27,7 +27,7 @@ ACTION(LexerAction,
         ssrc << ifs.rdbuf();
         std::string src = ssrc.str();
         std::vector<std::tuple<Token, std::string>> tokens;
-        Preprocessor::Process(src);
+        src = Preprocessor::Process(src);
         Lexer lexer(src);
         Token cur_token = Token::Empty;
         while (cur_token != Token::Eof) {
@@ -35,8 +35,8 @@ ACTION(LexerAction,
             tokens.push_back({temptoken, name});
             cur_token = temptoken;
         }
-        for (auto& [_, name] : tokens) {
-            std::cout << name << std::endl;
+        for (auto& [type, name] : tokens) {
+            std::cout << name << ", " << type << std::endl;
         }
     } else {
         ERROR("File not found: " << args_);

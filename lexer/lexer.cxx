@@ -1,6 +1,8 @@
 #include <lexer/lexer.hxx>
 #include <regex>
 #include <iostream>
+#include <iomanip>
+#include <common/error.hxx>
 #include <misc/scope_guard.hxx>
 
 Lexer::Lexer(const std::string& input)
@@ -49,7 +51,7 @@ bool Lexer::check(char c)
         return true;
     }
 
-    if (c == ' ' || c == '\t' || c == '\n')
+    if (c == ' ' || c == '\t' || c == '\n' || c == '\r')
         return next_token_string_.empty();
 
     if (std::regex_match(std::string(1, c), std::regex("[A-Za-z0-9_]"))) {
@@ -75,6 +77,9 @@ bool Lexer::check(char c)
                     ++index_;
                     next_token_string_ += *index_;
                 }
+            } else if (n == '=') {
+                ++index_;
+                next_token_string_ += *index_;
             }
             return false;
         }
@@ -132,7 +137,7 @@ bool Lexer::check(char c)
             return true;
         }
         default: {
-            throw std::runtime_error(std::string("Unknown character:") + c);
+            ERROR("Unknown character: 0x" << std::setfill('0') << std::setw(2) << std::hex << (int)c);
         }
     }
 
@@ -156,7 +161,6 @@ Token Lexer::get_type()
         return Token::Int;
     } else if (matchw("return")) {
         return Token::Return;
-    } else if (match("")) {
     } else if (matchw(">>=")) {
         return Token::RightAssign;
     } else if (matchw("<<=")) {
@@ -188,7 +192,7 @@ Token Lexer::get_type()
     } else if (matchw("||")) {
         return Token::OrOp;
     } else if (matchw("&&")) {
-        return Token::IncOp;
+        return Token::AndOp;
     } else if (matchw(">=")) {
         return Token::GeOp;
     } else if (matchw("<=")) {
@@ -201,5 +205,5 @@ Token Lexer::get_type()
         return Token::IntegerConstant;
     }
     #undef match
-    throw std::runtime_error("Unknown token:" + next_token_string_);
+    ERROR("Unknown token:" << next_token_string_);
 }

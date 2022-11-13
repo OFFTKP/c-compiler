@@ -9,8 +9,10 @@ const std::vector<std::string>& TestBase::getDataFiles() {
     if (!cached) {
         cached = true;
         for (const auto& entry : std::filesystem::directory_iterator(TEST_DATA_FILEPATH))
-            data_files_.push_back(entry.path().string());
+            if (std::filesystem::is_regular_file(entry.path()))
+                data_files_.push_back(entry.path().string());
     }
+    CPPUNIT_ASSERT(data_files_.size() > 0);
     #endif
     return data_files_;
 }
