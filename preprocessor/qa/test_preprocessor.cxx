@@ -8,10 +8,12 @@ class TestPreprocessor : public TestBase {
     void preprocessConditionalCompilationFiles();
     void preprocessErrorFiles();
     void preprocessPredefinedMacroFiles();
+    void preprocessFilesWithExpected();
     CPPUNIT_TEST_SUITE(TestPreprocessor);
     CPPUNIT_TEST(preprocessConditionalCompilationFiles);
     CPPUNIT_TEST(preprocessErrorFiles);
     CPPUNIT_TEST(preprocessPredefinedMacroFiles);
+    CPPUNIT_TEST(preprocessFilesWithExpected);
     CPPUNIT_TEST_SUITE_END();
 
     inline std::string getSource(std::string path);
@@ -47,13 +49,15 @@ void TestPreprocessor::preprocessErrorFiles() {
             preprocessor.Process();
         } catch (const std::exception& ex) {
             CPPUNIT_ASSERT(preprocessor.IsError());
-            const auto& defines = preprocessor.GetDefines();
             // The first definition will define the type of test
-            const auto& [key, _] = *defines.begin();
+            std::string firstline;
+            std::stringstream sstr(str);
+            std::getline(sstr, firstline);
+            auto key = firstline.substr(std::string("#define ").size());
             PreprocessorError expected_error = getExpectedError(key);
             PreprocessorError actual_error = preprocessor.GetError();
             CPPUNIT_ASSERT_EQUAL_MESSAGE(
-                "Error codes don't match!",
+                std::string("Error codes don't match: ") + path,
                 expected_error,
                 actual_error
             );
@@ -113,6 +117,18 @@ void TestPreprocessor::preprocessPredefinedMacroFiles() {
             "}\n"
             "int b = 3;\n";
         CPPUNIT_ASSERT_EQUAL_MESSAGE("Line numbers don't match!", expected, actual);
+    }
+}
+
+void TestPreprocessor::preprocessFilesWithExpected() {
+    const auto& src_files = getDataFiles("compare/src");
+    const auto& expected_files = getDataFiles("compare/expected");
+    for (size_t i = 0; i < src_files.size(); i++) {
+        auto src = getSource(src_files[i]);
+        auto expected = getSource(expected_files[i]);
+        Preprocessor preprocessor(src, src_files[i]);
+        auto actual = preprocessor.Process();
+        CPPUNIT_ASSERT_EQUAL_MESSAGE("Sources don't match!", expected, actual);
     }
 }
 

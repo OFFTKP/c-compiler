@@ -1,6 +1,7 @@
 #ifndef PREPROCESSOR_ERROR_HXX
 #define PREPROCESSOR_ERROR_HXX
 #include <common/str_hash.hxx>
+#include <common/log.hxx>
 #include <string>
 
 enum class PreprocessorError {
@@ -17,7 +18,7 @@ static PreprocessorError getExpectedError(std::string define) {
         case hash("__TEST_ERROR_INCLUDE_DEPTH"): return PreprocessorError::IncludeDepth;
         case hash("__TEST_ERROR_NOT_FOUND"): return PreprocessorError::IncludeNotFound;
         case hash("__TEST_ERROR_DIRECTIVE"): return PreprocessorError::Directive;
-        default: return PreprocessorError::Placeholder;
+        default: ERROR(define) return PreprocessorError::Placeholder;
     }
 }
 #endif

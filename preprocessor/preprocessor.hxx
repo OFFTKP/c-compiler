@@ -1,6 +1,6 @@
 #ifndef PREPROCESSOR_HXX
 #define PREPROCESSOR_HXX
-#include <preprocessor/preprocessor_log.hxx>
+#include <preprocessor/preprocessor_error.hxx>
 #include <optional>
 #include <vector>
 #include <string>
@@ -21,8 +21,12 @@ private:
     std::string remove_comments(const std::string& input);
     void process_impl(const std::string& input, std::filesystem::path current_path);
     size_t include_impl(std::vector<std::string>& lines, std::filesystem::path path, size_t i);
+    void remove_unnecessary(std::string&);
     void replace_predefined_macros(std::string&);
+    void replace_macros(std::string&);
     void throw_error(PreprocessorError error, std::string message = "");
+    void define(std::string key, std::string value = "");
+    void initialize_defines();
 
     const std::string& input_;
     std::unordered_map<std::string, std::string> defines_;

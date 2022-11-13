@@ -9,5 +9,6 @@ struct Variables {
     VAR(std::vector<std::string>, Errors, {})
     VAR(std::vector<std::string>, Warnings, {})
     VAR(std::vector<std::string>, Log, {})
+    VAR(bool, Debug, false)
 };
 #endif

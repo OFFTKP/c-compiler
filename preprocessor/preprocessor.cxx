@@ -18,7 +18,7 @@ Preprocessor::~Preprocessor() {}
 std::string Preprocessor::Process() {
     if (IsError())
         return "";
-
+    initialize_defines();
     std::string ret = input_;
     current_path_ = std::filesystem::path(first_file_path_);
     process_impl(ret, first_file_path_);
@@ -95,9 +95,11 @@ std::string Preprocessor::remove_comments(const std::string& input) {
 }
 
 void Preprocessor::process_impl(const std::string& input, std::filesystem::path current_path) {
+    std::string copy = input;
+    remove_unnecessary(copy);
     current_path_ = current_path;
     std::vector<std::string> lines;
-    std::stringstream stream(input);
+    std::stringstream stream(copy);
     std::string line;
     while (std::getline(stream, line))
         lines.push_back(line);
@@ -122,7 +124,7 @@ void Preprocessor::process_impl(const std::string& input, std::filesystem::path 
                 std::smatch match;
                 if (std::regex_match(line, match, define_regex)) {
                     // #define
-                    defines_[match[1]] = match[2];
+                    define(match[1], match[2]);
                 } else if (std::regex_match(line, match, error_regex)) {
                     // #error
                     throw_error(PreprocessorError::Directive, match[1]);
@@ -151,6 +153,7 @@ void Preprocessor::process_impl(const std::string& input, std::filesystem::path 
                 }
             } else {
                 replace_predefined_macros(line);
+                replace_macros(line);
                 out_stream_ << line << "\n";
             }
         } else {
@@ -202,6 +205,10 @@ void Preprocessor::throw_error(PreprocessorError error, std::string message) {
     throw std::runtime_error(error_message);
 }
 
+void Preprocessor::remove_unnecessary(std::string& input) {
+    std::regex_replace(input, std::regex(R"(\\n)"), "");
+}
+
 void Preprocessor::replace_predefined_macros(std::string& line) {
     static std::regex date_regex(R"!!(([\W]|^)(__DATE__)([\W]|$))!!");
     static std::regex time_regex(R"!!(([\W]|^)(__TIME__)([\W]|$))!!");
@@ -219,4 +226,34 @@ void Preprocessor::replace_predefined_macros(std::string& line) {
     line = std::regex_replace(line, time_regex, stime.str());
     line = std::regex_replace(line, file_regex, sfile);
     line = std::regex_replace(line, line_regex, sline);
+}
+
+void Preprocessor::replace_macros(std::string& line) {
+    bool any_replaced = true;
+    while (any_replaced) {
+        any_replaced = false;
+        const std::string start = R"!!(([\W]|^))!!";
+        const std::string end = R"!!(([\W]|$))!!";
+        for (const auto& [key, value] : defines_) {
+            auto regex = std::regex(start + key + end);
+            auto ret = std::regex_replace(line, regex, value, std::regex_constants::format_no_copy);
+            bool replaced = !ret.empty();
+            if (replaced) {
+                std::swap(line, ret);
+                any_replaced = true;
+            }
+        }
+    }
+}
+
+void Preprocessor::define(std::string key, std::string value) {
+    if (defines_.find(key) != defines_.end())
+        WARN(key << " redefinition")
+    defines_[key] = value;
+}
+
+void Preprocessor::initialize_defines() {
+    define("NULL", "0");
+    if (!Variables::GetDebug())
+        define("NDEBUG");
 }

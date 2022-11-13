@@ -27,7 +27,8 @@ ACTION(LexerAction,
         ssrc << ifs.rdbuf();
         std::string src = ssrc.str();
         std::vector<std::tuple<Token, std::string>> tokens;
-        src = Preprocessor::Process(src);
+        Preprocessor preprocessor(src, args_);
+        src = preprocessor.Process();
         Lexer lexer(src);
         Token cur_token = Token::Empty;
         while (cur_token != Token::Eof) {
