@@ -9,8 +9,8 @@ cd build &&
 ctest --output-on-failure)
 
 # Test lexer
-(cd ${SCRIPT_DIR}/lexer/qa &&
-cmake -B build &&
-cmake --build build &&
-cd build &&
-ctest --output-on-failure)
+# (cd ${SCRIPT_DIR}/lexer/qa &&
+# cmake -B build &&
+# cmake --build build &&
+# cd build &&
+# ctest --output-on-failure)

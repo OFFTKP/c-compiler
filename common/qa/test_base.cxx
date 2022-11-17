@@ -1,7 +1,8 @@
 #include <common/qa/test_base.hxx>
 #include <filesystem>
 
-const std::vector<std::string>& TestBase::getDataFiles(std::string suffix) {
+std::vector<std::string> TestBase::getDataFiles(std::string suffix) {
+    // TODO: data_files_ shouldnt be member
     #ifndef TEST_DATA_FILEPATH
     CPPUNIT_ASSERT(false && "TEST_DATA_FILEPATH not defined");
     #else

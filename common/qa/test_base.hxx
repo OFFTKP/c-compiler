@@ -8,7 +8,7 @@
 class TestBase : public CppUnit::TestFixture {
 
 protected:
-    const std::vector<std::string>& getDataFiles(std::string suffix = "");
+    std::vector<std::string> getDataFiles(std::string suffix = "");
     std::string getDataPath();
 private:
     std::vector<std::string> data_files_;

@@ -17,6 +17,7 @@ class TestPreprocessor : public TestBase {
     CPPUNIT_TEST_SUITE_END();
 
     inline std::string getSource(std::string path);
+    inline void dumpDefines(Preprocessor& preprocessor);
 };
 
 void TestPreprocessor::preprocessConditionalCompilationFiles() {
@@ -28,13 +29,7 @@ void TestPreprocessor::preprocessConditionalCompilationFiles() {
         std::string message = "Failed file: " + path;
         bool passed = preprocessor.IsDefined(__TEST_PASSED);
         if (!passed) {
-            // Dump definitions
-            const auto& defines = preprocessor.GetDefines();
-            int i = 1;
-            if (defines.empty())
-                std::cout << "Defines are empty!" << std::endl;
-            else for (const auto& [key, value] : defines)
-                std::cout << i++ << ". " << key << ": " << value << std::endl;
+            dumpDefines(preprocessor);            
         }
         CPPUNIT_ASSERT_MESSAGE(message, passed);
     }
@@ -127,8 +122,13 @@ void TestPreprocessor::preprocessFilesWithExpected() {
         auto src = getSource(src_files[i]);
         auto expected = getSource(expected_files[i]);
         Preprocessor preprocessor(src, src_files[i]);
-        auto actual = preprocessor.Process();
-        CPPUNIT_ASSERT_EQUAL_MESSAGE("Sources don't match!", expected, actual);
+        try {
+            auto actual = preprocessor.Process();
+            CPPUNIT_ASSERT_EQUAL_MESSAGE("Sources don't match!", expected, actual);
+        } catch (...) {
+            dumpDefines(preprocessor);
+            CPPUNIT_ASSERT_MESSAGE("Exception caught!", false);
+        }
     }
 }
 
@@ -139,6 +139,27 @@ std::string TestPreprocessor::getSource(std::string path) {
     std::stringstream ss;
     ss << ifs.rdbuf();
     return ss.str();
+}
+
+void TestPreprocessor::dumpDefines(Preprocessor& preprocessor) {
+    {
+        const auto& defines = preprocessor.GetDefines();
+        int i = 1;
+        if (defines.empty())
+            std::cout << "Defines are empty!" << std::endl;
+        else for (const auto& [key, value] : defines)
+            std::cout << i++ << ". " << key << ": " << value << std::endl;
+    }
+    {
+        const auto& defines = preprocessor.GetFunctionDefines();
+        int i = 1;
+        if (defines.empty())
+            std::cout << "Function defines are empty!" << std::endl;
+        else for (const auto& [key, tuple] : defines) {
+            const auto& [count, value] = tuple;
+            std::cout << i++ << ". " << key << "(" << count << ")" << ": " << value << std::endl;
+        }
+    }
 }
 
 CPPUNIT_TEST_SUITE_REGISTRATION(TestPreprocessor);

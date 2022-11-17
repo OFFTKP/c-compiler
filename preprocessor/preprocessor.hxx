@@ -17,6 +17,7 @@ struct Preprocessor {
     bool IsError() { return current_error_.has_value(); }
     PreprocessorError GetError() { return *current_error_; }
     const auto& GetDefines() { return defines_; }
+    const auto& GetFunctionDefines() { return function_defines_; }
 private:
     std::string remove_comments(const std::string& input);
     void process_impl(const std::string& input, std::filesystem::path current_path);
@@ -26,10 +27,13 @@ private:
     void replace_macros(std::string&);
     void throw_error(PreprocessorError error, std::string message = "");
     void define(std::string key, std::string value = "");
+    void define_function(std::string key, int args, std::string value);
+    int handle_args(const std::string& args, std::string& value);
     void initialize_defines();
 
     const std::string& input_;
     std::unordered_map<std::string, std::string> defines_;
+    std::unordered_map<std::string, std::tuple<int, std::string>> function_defines_;
     const std::filesystem::path first_file_path_;
     std::filesystem::path current_path_;
     size_t current_line_ = 0;
