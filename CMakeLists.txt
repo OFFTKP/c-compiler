@@ -7,5 +7,6 @@ add_executable(
     ${RootPath}/lexer/lexer.cxx
     ${RootPath}/preprocessor/preprocessor.cxx
     ${RootPath}/dispatcher/dispatcher.cxx
+    ${RootPath}/boolean_evaluator/boolean_evaluator.cxx
 )
 target_include_directories(Compiler PUBLIC ${RootPath}/)

@@ -9,6 +9,7 @@ add_executable(
     ${RootPath}/preprocessor/qa/test_preprocessor.cxx
     ${RootPath}/common/qa/test_base.cxx
     ${RootPath}/preprocessor/preprocessor.cxx
+    ${RootPath}/boolean_evaluator/boolean_evaluator.cxx
 )
 target_include_directories(TestPreprocessor PUBLIC ${RootPath}/)
 target_compile_definitions(TestPreprocessor PRIVATE TEST_DATA_FILEPATH="${CMAKE_CURRENT_SOURCE_DIR}/data")

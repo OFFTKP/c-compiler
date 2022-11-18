@@ -1,0 +1,1 @@
+int MyFuncName() { return 1 + 3 * 5; }

@@ -17,6 +17,24 @@ std::vector<std::string> TestBase::getDataFiles(std::string suffix) {
     return data_files_;
 }
 
+std::string TestBase::getSource(const std::string& path) {
+    CPPUNIT_ASSERT(std::filesystem::is_regular_file(path));
+    std::ifstream ifs(path);
+    CPPUNIT_ASSERT(ifs.is_open() && ifs.good());
+    std::stringstream ss;
+    ss << ifs.rdbuf();
+    return ss.str();
+}
+
+std::vector<std::string> TestBase::getLines(const std::string& source) {
+    std::vector<std::string> lines;
+    std::stringstream stream(source);
+    std::string line;
+    while (std::getline(stream, line))
+        lines.push_back(line);
+    return lines;
+}
+
 std::string TestBase::getDataPath() {
     #ifndef TEST_DATA_FILEPATH
     CPPUNIT_ASSERT(false && "TEST_DATA_FILEPATH not defined");

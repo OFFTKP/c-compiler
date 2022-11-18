@@ -7,6 +7,9 @@
 #include <filesystem>
 #include <unordered_map>
 
+using Defines = std::unordered_map<std::string, std::string>;
+using FuncDefines = std::unordered_map<std::string, std::tuple<int, std::string>>;
+
 struct Preprocessor {
     Preprocessor(const std::string& input, std::filesystem::path path);
     ~Preprocessor();
@@ -18,7 +21,9 @@ struct Preprocessor {
     PreprocessorError GetError() { return *current_error_; }
     const auto& GetDefines() { return defines_; }
     const auto& GetFunctionDefines() { return function_defines_; }
+    void DumpDefines();
 
+    // Dumps latest preprocessor defines, to be used after a preprocessor instance is destructed
     static void dumpDefines();
 private:
     std::string remove_comments(const std::string& input);
@@ -32,10 +37,11 @@ private:
     void define_function(std::string key, int args, std::string value);
     int handle_args(const std::string& args, std::string& value);
     void initialize_defines();
+    static void dump_defines_impl(const Defines& defines, const FuncDefines& function_defines);
 
     const std::string& input_;
-    std::unordered_map<std::string, std::string> defines_;
-    std::unordered_map<std::string, std::tuple<int, std::string>> function_defines_;
+    Defines defines_;
+    FuncDefines function_defines_;
     const std::filesystem::path first_file_path_;
     std::filesystem::path current_path_;
     size_t current_line_ = 0;
@@ -43,12 +49,12 @@ private:
     std::stringstream out_stream_;
     std::optional<PreprocessorError> current_error_ = std::nullopt;
 
-    static std::unordered_map<std::string, std::string>& getLatestDefines() {
-        static std::unordered_map<std::string, std::string> latest_defines_;
+    static Defines& getLatestDefines() {
+        static Defines latest_defines_;
         return latest_defines_;
     }
-    static std::unordered_map<std::string, std::tuple<int, std::string>>& getLatestFunctionDefines() {
-        static std::unordered_map<std::string, std::tuple<int, std::string>> latest_function_defines_;
+    static FuncDefines& getLatestFunctionDefines() {
+        static FuncDefines latest_function_defines_;
         return latest_function_defines_;
     }
 };

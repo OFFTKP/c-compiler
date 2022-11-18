@@ -15,9 +15,6 @@ class TestPreprocessor : public TestBase {
     CPPUNIT_TEST(preprocessPredefinedMacroFiles);
     CPPUNIT_TEST(preprocessFilesWithExpected);
     CPPUNIT_TEST_SUITE_END();
-
-    inline std::string getSource(std::string path);
-    inline void dumpDefines(Preprocessor& preprocessor);
 };
 
 void TestPreprocessor::preprocessConditionalCompilationFiles() {
@@ -29,7 +26,7 @@ void TestPreprocessor::preprocessConditionalCompilationFiles() {
         std::string message = "Failed file: " + path;
         bool passed = preprocessor.IsDefined(__TEST_PASSED);
         if (!passed) {
-            dumpDefines(preprocessor);            
+            Preprocessor::dumpDefines();
         }
         CPPUNIT_ASSERT_MESSAGE(message, passed);
     }
@@ -74,7 +71,7 @@ void TestPreprocessor::preprocessPredefinedMacroFiles() {
         auto time = std::time(nullptr);
         auto localtime = *std::localtime(&time);
         std::stringstream ss;
-        ss << '"' << std::put_time(&localtime, "%b %d %Y") << "\"\n";
+        ss << '"' << std::put_time(&localtime, "%b %d %Y") << '"';
         std::string expected = ss.str();
         CPPUNIT_ASSERT_EQUAL_MESSAGE("Dates don't match!", expected, actual);
     }
@@ -86,7 +83,7 @@ void TestPreprocessor::preprocessPredefinedMacroFiles() {
         auto time = std::time(nullptr);
         auto localtime = *std::localtime(&time);
         std::stringstream ss;
-        ss << '"' << std::put_time(&localtime, "%H:%M:%S") << "\"\n";
+        ss << '"' << std::put_time(&localtime, "%H:%M:%S") << '"';
         std::string expected = ss.str();
         CPPUNIT_ASSERT_EQUAL_MESSAGE("Times don't match!", expected, actual);
     }
@@ -96,7 +93,7 @@ void TestPreprocessor::preprocessPredefinedMacroFiles() {
         Preprocessor preprocessor(str, cur_path);
         auto actual = preprocessor.Process();
         std::stringstream ss;
-        ss << '"' << cur_path << "\"\n";
+        ss << '"' << cur_path << '"';
         std::string expected = ss.str();
         CPPUNIT_ASSERT_EQUAL_MESSAGE("File paths don't match!", expected, actual);
     }
@@ -110,7 +107,7 @@ void TestPreprocessor::preprocessPredefinedMacroFiles() {
             "int some_func() {\n"
             "    return 1;\n"
             "}\n"
-            "int b = 3;\n";
+            "int b = 3;";
         CPPUNIT_ASSERT_EQUAL_MESSAGE("Line numbers don't match!", expected, actual);
     }
 }
@@ -126,39 +123,9 @@ void TestPreprocessor::preprocessFilesWithExpected() {
             auto actual = preprocessor.Process();
             CPPUNIT_ASSERT_EQUAL_MESSAGE("Sources don't match!", expected, actual);
         } catch (const std::exception& ex) {
-            dumpDefines(preprocessor);
+            preprocessor.DumpDefines();
             ERROR("Caught exception: " << ex.what());
             CPPUNIT_ASSERT_MESSAGE("Exception caught!", false);
-        }
-    }
-}
-
-std::string TestPreprocessor::getSource(std::string path) {
-    CPPUNIT_ASSERT(std::filesystem::is_regular_file(path));
-    std::ifstream ifs(path);
-    CPPUNIT_ASSERT(ifs.is_open() && ifs.good());
-    std::stringstream ss;
-    ss << ifs.rdbuf();
-    return ss.str();
-}
-
-void TestPreprocessor::dumpDefines(Preprocessor& preprocessor) {
-    {
-        const auto& defines = preprocessor.GetDefines();
-        int i = 1;
-        if (defines.empty())
-            std::cout << "Defines are empty!" << std::endl;
-        else for (const auto& [key, value] : defines)
-            std::cout << i++ << ". " << key << ": " << value << std::endl;
-    }
-    {
-        const auto& defines = preprocessor.GetFunctionDefines();
-        int i = 1;
-        if (defines.empty())
-            std::cout << "Function defines are empty!" << std::endl;
-        else for (const auto& [key, tuple] : defines) {
-            const auto& [count, value] = tuple;
-            std::cout << i++ << ". " << key << "(" << count << ")" << ": " << value << std::endl;
         }
     }
 }

@@ -23,17 +23,23 @@ Preprocessor::~Preprocessor() {
 }
 
 void Preprocessor::dumpDefines() {
-    if (getLatestDefines().size() == 0 && getLatestFunctionDefines().size() == 0)
+    dump_defines_impl(getLatestDefines(), getLatestFunctionDefines());
+}
+
+void Preprocessor::DumpDefines() {
+    dump_defines_impl(defines_, function_defines_);
+}
+
+void Preprocessor::dump_defines_impl(const Defines& defines, const FuncDefines& function_defines) {
+    if (defines.size() == 0 && function_defines.size() == 0)
         std::cout << "No defines to dump :(" << std::endl;
     else {
-        auto& defines = getLatestDefines();
         if (defines.size() != 0) {
             std::cout << "Dumping defines: " << std::endl;
             for (const auto& [key, value] : defines) {
                 std::cout << key << ": " << value << std::endl;
             }
         }
-        auto& function_defines = getLatestFunctionDefines();
         if (function_defines.size() != 0) {
             std::cout << "Dumping function defines: " << std::endl;
             for (const auto& [key, tuple] : function_defines) {
@@ -154,6 +160,7 @@ void Preprocessor::process_impl(const std::string& input, std::filesystem::path 
     while (i < lines.size()) {
         current_line_ = i + 1; // 1-based
         auto line = lines[i++];
+        bool last = i == lines.size();
         if (conditional) {
             if (std::find(line.begin(), line.end(), '#') != line.end()) {
                 // Handle lines that contain '#'
@@ -197,7 +204,9 @@ void Preprocessor::process_impl(const std::string& input, std::filesystem::path 
             } else {
                 replace_predefined_macros(line);
                 replace_macros(line);
-                out_stream_ << line << "\n";
+                out_stream_ << line;
+                if (!last)
+                    out_stream_ << "\n";
             }
         } else {
             std::smatch match;
@@ -218,10 +227,9 @@ size_t Preprocessor::include_impl(std::vector<std::string>& lines, std::filesyst
     std::stringstream ss;
     ss << file.rdbuf();
     std::string unprocessed_src = ss.str();
-    std::cout << "including: " << path << std::endl;
-    std::cout << "unprocessed src:" << unprocessed_src << "!!!!!!!!" << std::endl;
     // Processing current included file
     process_impl(unprocessed_src, path);
+    out_stream_ << '\n';
     current_include_depth_--;
     return 0;
 }
@@ -285,9 +293,7 @@ void Preprocessor::replace_macros(std::string& line) {
             auto regex = std::regex(word_start + key + word_end);
             if (std::regex_search(line, regex)) {
                 any_replaced = true;
-                std::cout << "old: " << line << std::endl;
                 line = std::regex_replace(line, regex, std::string("$01") + value + std::string("$02"));
-                std::cout << "new: " << line << std::endl;
             }
         }
         const std::string spacing_opt = R"!!([ \t]*)!!";
@@ -366,4 +372,5 @@ void Preprocessor::initialize_defines() {
     define("NULL", "0");
     if (!Variables::GetDebug())
         define("NDEBUG");
+    define("__STDC__", "1");
 }

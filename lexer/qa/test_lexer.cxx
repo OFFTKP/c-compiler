@@ -28,7 +28,7 @@ std::vector<std::tuple<Token, std::string>> TestLexer::lexFile(std::string src) 
 }
 
 void TestLexer::lexTestFiles() {
-    const auto& files = getDataFiles();
+    auto files = getDataFiles();
     for (auto& path : files) {
         std::cout << "Now testing: " << path << std::endl;
         CPPUNIT_ASSERT(std::filesystem::is_regular_file(path));
