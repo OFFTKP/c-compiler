@@ -1,6 +1,6 @@
 #include <boolean_evaluator/boolean_evaluator.hxx>
-#include <vector>
 #include <common/log.hxx>
+#include <vector>
 
 bool BooleanEvaluator::Evaluate(const std::string& expression) {
     #define err ERROR("Syntax error while evaluating boolean expression: " << expression); return false

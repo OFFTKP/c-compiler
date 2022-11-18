@@ -1,4 +1,5 @@
 #include <preprocessor/preprocessor.hxx>
+#include <boolean_evaluator/boolean_evaluator.hxx>
 #include <common/log.hxx>
 #include <common/state.hxx>
 #include <regex>
@@ -151,6 +152,7 @@ void Preprocessor::process_impl(const std::string& input, std::filesystem::path 
     static std::regex undef_regex(R"(^[ \t]*#[ \t]*undef[ \t]+([A-Za-z_][A-Za-z_0-9]*)[ \t]*$)");
     static std::regex ifdef_regex(R"(^[ \t]*#[ \t]*ifdef[ \t]+([A-Za-z_][A-Za-z_0-9]*)[ \t]*$)");
     static std::regex ifndef_regex(R"(^[ \t]*#[ \t]*ifndef[ \t]+([A-Za-z_][A-Za-z_0-9]*)[ \t]*$)");
+    static std::regex if_regex(R"!(^[ \t]*#[ \t]*if[ \t]+(.*)$)!");
     static std::regex endif_regex(R"(^[ \t]*#[ \t]*endif[ \t]*$)");
     static std::regex include_regex_angle(R"(^[ \t]*#[ \t]*include[ \t]+<([A-Za-z0-9_/\.]+)>[ \t]*$)");
     static std::regex include_regex_quote(R"!!(^[ \t]*#[ \t]*include[ \t]+"([A-Za-z0-9_/\.]+)"[ \t]*$)!!");
@@ -176,6 +178,12 @@ void Preprocessor::process_impl(const std::string& input, std::filesystem::path 
                 } else if (std::regex_match(line, match, error_regex)) {
                     // #error
                     throw_error(PreprocessorError::Directive, match[1]);
+                } else if (std::regex_match(line, match, if_regex)) {
+                    // #if
+                    // TODO: error no body?
+                    std::string unprocessed_expr = match[1];
+                    auto expr = simplify_expression(unprocessed_expr);
+                    conditional = BooleanEvaluator::Evaluate(expr);
                 } else if (std::regex_match(line, match, undef_regex)) {
                     // #undef
                     // TODO: warning not defined (Error?)
@@ -215,6 +223,28 @@ void Preprocessor::process_impl(const std::string& input, std::filesystem::path 
             }
         }
     }
+}
+
+std::string Preprocessor::simplify_expression(const std::string& expression) {
+    std::string ret = expression;
+    std::string prefix = R"!(defined[ \t]*[\( ][ \t]*)!";
+    std::string suffix = R"!([ \t]*[\) ])!";
+    for (const auto& [key, _] : defines_) {
+        std::regex regex(prefix + key + suffix);
+        ret = std::regex_replace(ret, regex, "T");
+    }
+    for (const auto& [key, _] : function_defines_) {
+        std::regex regex(prefix + key + suffix);
+        ret = std::regex_replace(ret, regex, "T");
+    }
+    std::regex regex(prefix + "(.+?)" + suffix);
+    ret = std::regex_replace(ret, regex, "F");
+    // Remove spaces
+    ret = std::regex_replace(ret, std::regex("[ \t]"), "");
+    // Replace && with & and || with |
+    ret = std::regex_replace(ret, std::regex(R"(\|\|)"), "|");
+    ret = std::regex_replace(ret, std::regex(R"(&&)"), "&");
+    return ret;
 }
 
 size_t Preprocessor::include_impl(std::vector<std::string>& lines, std::filesystem::path path, size_t i) {

@@ -37,6 +37,7 @@ private:
     void define_function(std::string key, int args, std::string value);
     int handle_args(const std::string& args, std::string& value);
     void initialize_defines();
+    std::string simplify_expression(const std::string&);
     static void dump_defines_impl(const Defines& defines, const FuncDefines& function_defines);
 
     const std::string& input_;
