@@ -17,7 +17,38 @@ Preprocessor::Preprocessor(const std::string& input, std::filesystem::path path)
     , first_file_path_(path)
 {}
 
-Preprocessor::~Preprocessor() {}
+Preprocessor::~Preprocessor() {
+    getLatestDefines() = std::move(defines_);
+    getLatestFunctionDefines() = std::move(function_defines_);
+}
+
+void Preprocessor::dumpDefines() {
+    if (getLatestDefines().size() == 0 && getLatestFunctionDefines().size() == 0)
+        std::cout << "No defines to dump :(" << std::endl;
+    else {
+        auto& defines = getLatestDefines();
+        if (defines.size() != 0) {
+            std::cout << "Dumping defines: " << std::endl;
+            for (const auto& [key, value] : defines) {
+                std::cout << key << ": " << value << std::endl;
+            }
+        }
+        auto& function_defines = getLatestFunctionDefines();
+        if (function_defines.size() != 0) {
+            std::cout << "Dumping function defines: " << std::endl;
+            for (const auto& [key, tuple] : function_defines) {
+                const auto& [arg_count, value] = tuple;
+                std::cout << key << "(";
+                for (int i = 0; i < arg_count; i++) {
+                    std::cout << "$" << i + 2;
+                    if (i != arg_count - 1)
+                        std::cout << ", ";
+                }
+                std::cout << ")" << ": " << value << ")" << std::endl;
+            }
+        }
+    }
+}
 
 std::string Preprocessor::Process() {
     if (IsError())
@@ -108,12 +139,12 @@ void Preprocessor::process_impl(const std::string& input, std::filesystem::path 
     while (std::getline(stream, line))
         lines.push_back(line);
 
-    static std::regex define_function_regex(R"!!(^[ \t]*#[ \t]*define[ \t]+([A-Za-z_][A-Za-z_0-9]+)[ \t]*\((.+?)\)[ \t]*(.*)$)!!");
-    static std::regex define_regex(R"(^[ \t]*#[ \t]*define[ \t]+([A-Za-z_][A-Za-z_0-9]+)[ \t]*(.*)$)");
+    static std::regex define_function_regex(R"!!(^[ \t]*#[ \t]*define[ \t]+([A-Za-z_][A-Za-z_0-9]*)[ \t]*\((.+?)\)[ \t]*(.*)$)!!");
+    static std::regex define_regex(R"!(^[ \t]*#[ \t]*define[ \t]+([A-Za-z_][A-Za-z_0-9]*)[ \t]*(.*)$)!");
     static std::regex error_regex(R"(^[ \t]*#[ \t]*error[ \t]+(.+)$)");
-    static std::regex undef_regex(R"(^[ \t]*#[ \t]*undef[ \t]+([A-Za-z_][A-Za-z_0-9]+)[ \t]*$)");
-    static std::regex ifdef_regex(R"(^[ \t]*#[ \t]*ifdef[ \t]+([A-Za-z_][A-Za-z_0-9]+)[ \t]*$)");
-    static std::regex ifndef_regex(R"(^[ \t]*#[ \t]*ifndef[ \t]+([A-Za-z_][A-Za-z_0-9]+)[ \t]*$)");
+    static std::regex undef_regex(R"(^[ \t]*#[ \t]*undef[ \t]+([A-Za-z_][A-Za-z_0-9]*)[ \t]*$)");
+    static std::regex ifdef_regex(R"(^[ \t]*#[ \t]*ifdef[ \t]+([A-Za-z_][A-Za-z_0-9]*)[ \t]*$)");
+    static std::regex ifndef_regex(R"(^[ \t]*#[ \t]*ifndef[ \t]+([A-Za-z_][A-Za-z_0-9]*)[ \t]*$)");
     static std::regex endif_regex(R"(^[ \t]*#[ \t]*endif[ \t]*$)");
     static std::regex include_regex_angle(R"(^[ \t]*#[ \t]*include[ \t]+<([A-Za-z0-9_/\.]+)>[ \t]*$)");
     static std::regex include_regex_quote(R"!!(^[ \t]*#[ \t]*include[ \t]+"([A-Za-z0-9_/\.]+)"[ \t]*$)!!");
@@ -140,7 +171,9 @@ void Preprocessor::process_impl(const std::string& input, std::filesystem::path 
                     throw_error(PreprocessorError::Directive, match[1]);
                 } else if (std::regex_match(line, match, undef_regex)) {
                     // #undef
+                    // TODO: warning not defined (Error?)
                     defines_.erase(match[1]);
+                    function_defines_.erase(match[1]);
                 } else if (std::regex_match(line, match, ifdef_regex)) {
                     // #ifdef
                     conditional = (defines_.find(match[1]) != defines_.end());
@@ -185,6 +218,8 @@ size_t Preprocessor::include_impl(std::vector<std::string>& lines, std::filesyst
     std::stringstream ss;
     ss << file.rdbuf();
     std::string unprocessed_src = ss.str();
+    std::cout << "including: " << path << std::endl;
+    std::cout << "unprocessed src:" << unprocessed_src << "!!!!!!!!" << std::endl;
     // Processing current included file
     process_impl(unprocessed_src, path);
     current_include_depth_--;
@@ -207,6 +242,10 @@ void Preprocessor::throw_error(PreprocessorError error, std::string message) {
             ss << "Error directive hit: " << message;
             break;
         }
+        default: {
+            ss << message;
+            break;
+        }
     }
     std::string error_message;
     error_message = ss.str();
@@ -216,7 +255,7 @@ void Preprocessor::throw_error(PreprocessorError error, std::string message) {
 }
 
 void Preprocessor::remove_unnecessary(std::string& input) {
-    std::regex_replace(input, std::regex(R"(\\n)"), "");
+    input = std::regex_replace(input, std::regex(R"(\\\n)"), "");
 }
 
 void Preprocessor::replace_predefined_macros(std::string& line) {
@@ -244,35 +283,32 @@ void Preprocessor::replace_macros(std::string& line) {
         any_replaced = false;
         for (const auto& [key, value] : defines_) {
             auto regex = std::regex(word_start + key + word_end);
-            auto ret = std::regex_replace(line, regex, value, std::regex_constants::format_no_copy);
-            bool replaced = !ret.empty();
-            if (replaced) {
-                std::swap(line, ret);
+            if (std::regex_search(line, regex)) {
                 any_replaced = true;
+                std::cout << "old: " << line << std::endl;
+                line = std::regex_replace(line, regex, std::string("$01") + value + std::string("$02"));
+                std::cout << "new: " << line << std::endl;
             }
         }
-        const std::string spacing = R"!!([ \t]+)!!";
-        const std::string word = R"!!(([A-Za-z_][A-Za-z_0-9]+))!!";
+        const std::string spacing_opt = R"!!([ \t]*)!!";
+        const std::string word = R"!!((.+?))!!";
         for (const auto& [key, tuple] : function_defines_) {
             const auto& [arg_count, value] = tuple;
-            // Use a simpler regex before getting the arguments
-            auto exists = std::regex(word_start + key + word_end);
             // Build the regex to replace the function
             std::stringstream regex_builder;
             regex_builder << word_start << key;
-            regex_builder << spacing << "\\(" << spacing;
+            regex_builder << spacing_opt << "\\(" << spacing_opt;
             for (int i = 0; i < arg_count; i++) {
-                regex_builder << word << spacing;
+                regex_builder << word << spacing_opt;
                 if (i != arg_count - 1)
-                    regex_builder << "," << spacing;
+                    regex_builder << "," << spacing_opt;
             }
             regex_builder << "\\)";
             auto regex = std::regex(regex_builder.str());
-            auto ret = std::regex_replace(line, regex, value, std::regex_constants::format_no_copy);
-            bool replaced = !ret.empty();
-            if (replaced) {
-                std::swap(line, ret);
+            if (std::regex_search(line, regex)) {
                 any_replaced = true;
+                // TODO: make it not need $1? aka whatever character was before the function_macro
+                line = std::regex_replace(line, regex, std::string("$01") + value);
             }
         }
     }
@@ -296,10 +332,11 @@ int Preprocessor::handle_args(const std::string& args, std::string& value) {
     for (int i = 0; i < args.size(); i++) {
         switch (args[i]) {
             case ',': {
-                arg_split.push_back(cur_arg);
                 if (std::find(arg_split.begin(), arg_split.end(), cur_arg) != arg_split.end()) {
-                    throw_error(PreprocessorError::Placeholder, cur_arg + " function macro argument redefinition");
+                    throw_error(PreprocessorError::Placeholder, "function macro argument redefinition: " + cur_arg);
                 }
+                arg_split.push_back(cur_arg);
+                cur_arg = "";
                 break;
             }
             case ' ':
@@ -312,13 +349,17 @@ int Preprocessor::handle_args(const std::string& args, std::string& value) {
             }
         }
     }
-    int i = 0;
-    for (const auto& arg : args) {
+    arg_split.push_back(cur_arg);
+
+    int i = 1;
+    for (const auto& arg : arg_split) {
         // TODO: handle #arg and ##arg and args inside quotes
-        std::regex regex(word_start + arg + std::string(word_end));
-        std::regex_replace(value, regex, "$" + std::to_string(i));
+        auto regex_string = word_start + std::string("(") + arg + ")" + std::string(word_end);
+        std::regex regex(regex_string);
+        value = std::regex_replace(value, regex, "$1$$" + std::to_string(i + 1) + "$3");
         ++i;
     }
+    return arg_split.size();
 }
 
 void Preprocessor::initialize_defines() {

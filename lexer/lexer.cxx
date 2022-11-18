@@ -206,4 +206,5 @@ Token Lexer::get_type()
     }
     #undef match
     ERROR("Unknown token:" << next_token_string_);
+    return Token::Error;
 }

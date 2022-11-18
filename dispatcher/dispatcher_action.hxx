@@ -1,49 +1,29 @@
 #ifndef DISPATCHER_ACTION_HXX
 #define DISPATCHER_ACTION_HXX
+#include <preprocessor/preprocessor.hxx>
 #include <dispatcher/command.hxx>
 #include <lexer/lexer.hxx>
-#include <preprocessor/preprocessor.hxx>
+#include <common/strings.hxx>
 #include <common/log.hxx>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <string>
 
-#define ACTION(name, ...) struct name : public Action { ~name() = default; name(const std::string& args) : Action(args) {} void operator()() override { __VA_ARGS__ } };
+#define ACTION(name, ...) struct name : public Action { ~name() = default; name(const std::vector<std::string>& args) : Action(args) {} void operator()() override { __VA_ARGS__ } };
 
 struct Action
 {
-    Action(const std::string& args) : args_(args) {}
+    Action(const std::vector<std::string>& args) : args_(args) {}
     virtual ~Action() = default;
     virtual void operator()() = 0;
 protected:
-    std::string args_;
+    const std::vector<std::string>& args_;
 };
-#elif defined a
-ACTION(LexerAction,
-    if (std::filesystem::is_regular_file(args_)) {
-        std::ifstream ifs(args_);
-        std::stringstream ssrc;
-        ssrc << ifs.rdbuf();
-        std::string src = ssrc.str();
-        std::vector<std::tuple<Token, std::string>> tokens;
-        Preprocessor preprocessor(src, args_);
-        src = preprocessor.Process();
-        Lexer lexer(src);
-        Token cur_token = Token::Empty;
-        while (cur_token != Token::Eof) {
-            auto [temptoken, name] = lexer.GetNextToken();
-            tokens.push_back({temptoken, name});
-            cur_token = temptoken;
-        }
-        for (auto& [type, name] : tokens) {
-            std::cout << name << ", " << type << std::endl;
-        }
-    } else {
-        ERROR("File not found: " << args_);
-    }
-)
+
+#define DEF(type, arg_count, command_short, command_long, ...)  ACTION(Action##type, __VA_ARGS__)
+#include <dispatcher/command_type.def>
+#undef DEF
 
 #undef ACTION
-
 #endif

@@ -18,6 +18,8 @@ struct Preprocessor {
     PreprocessorError GetError() { return *current_error_; }
     const auto& GetDefines() { return defines_; }
     const auto& GetFunctionDefines() { return function_defines_; }
+
+    static void dumpDefines();
 private:
     std::string remove_comments(const std::string& input);
     void process_impl(const std::string& input, std::filesystem::path current_path);
@@ -40,5 +42,14 @@ private:
     int current_include_depth_ = 0;
     std::stringstream out_stream_;
     std::optional<PreprocessorError> current_error_ = std::nullopt;
+
+    static std::unordered_map<std::string, std::string>& getLatestDefines() {
+        static std::unordered_map<std::string, std::string> latest_defines_;
+        return latest_defines_;
+    }
+    static std::unordered_map<std::string, std::tuple<int, std::string>>& getLatestFunctionDefines() {
+        static std::unordered_map<std::string, std::tuple<int, std::string>> latest_function_defines_;
+        return latest_function_defines_;
+    }
 };
 #endif

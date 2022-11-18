@@ -125,8 +125,9 @@ void TestPreprocessor::preprocessFilesWithExpected() {
         try {
             auto actual = preprocessor.Process();
             CPPUNIT_ASSERT_EQUAL_MESSAGE("Sources don't match!", expected, actual);
-        } catch (...) {
+        } catch (const std::exception& ex) {
             dumpDefines(preprocessor);
+            ERROR("Caught exception: " << ex.what());
             CPPUNIT_ASSERT_MESSAGE("Exception caught!", false);
         }
     }

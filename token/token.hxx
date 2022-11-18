@@ -1,6 +1,7 @@
 #ifndef TOKEN_HXX
 #define TOKEN_HXX
 enum class Token {
+    Error,
     #define DEF(x,y) x = y,
     #include <token/tokens.def>
     #undef DEF
