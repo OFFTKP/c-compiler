@@ -6,13 +6,13 @@ DEF(LEX, 1, "-l", "--lex",
         std::stringstream ssrc;
         ssrc << ifs.rdbuf();
         std::string src = ssrc.str();
-        std::vector<std::tuple<Token, std::string>> tokens;
+        std::vector<std::tuple<TokenType, std::string>> tokens;
         Preprocessor preprocessor(src, cur);
         src = preprocessor.Process();
         Lexer lexer(src);
-        Token cur_token = Token::Empty;
-        while (cur_token != Token::Eof) {
-            auto [temptoken, name] = lexer.GetNextToken();
+        TokenType cur_token = TokenType::Empty;
+        while (cur_token != TokenType::Eof) {
+            auto [temptoken, name] = lexer.GetNextTokenType();
             tokens.push_back({temptoken, name});
             cur_token = temptoken;
         }

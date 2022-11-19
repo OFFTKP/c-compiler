@@ -5,7 +5,7 @@
 struct BooleanEvaluator {
     static bool Evaluate(const std::string& expression);
 private:
-    enum Token {
+    enum TokenType {
         FALSE = 0,
         TRUE = 1,
         OR,

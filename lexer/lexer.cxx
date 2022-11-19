@@ -8,13 +8,13 @@
 Lexer::Lexer(const std::string& input)
     : input_(input)
     , index_(input.begin())
-    , next_token_(Token::Empty)
+    , next_token_(TokenType::Empty)
     , is_string_literal_(false)
 {}
 
 Lexer::~Lexer() {}
 
-std::tuple<Token, std::string> Lexer::GetNextToken()
+std::tuple<TokenType, std::string> Lexer::GetNextTokenType()
 {
     ScopeGuard guard([&]() {
         next_token_string_ = "";
@@ -29,7 +29,7 @@ std::tuple<Token, std::string> Lexer::GetNextToken()
     }
     if (is_string_literal_)
         throw std::runtime_error("Unfinished string literal!");
-    return { Token::Eof, "" };
+    return { TokenType::Eof, "" };
 }
 
 char Lexer::peek(int i) {
@@ -144,67 +144,67 @@ bool Lexer::check(char c)
     return true;
 }
 
-Token Lexer::get_type()
+TokenType Lexer::get_type()
 {
     #define match(str) std::regex_match(next_token_string_, std::regex(str))
     #define matchw(str) next_token_string_ == str
     if (is_string_literal_) {
         is_string_literal_ = false;
-        return Token::StringLiteral;
+        return TokenType::StringLiteral;
     } else if (matchw("char")) {
-        return Token::Char;
+        return TokenType::Char;
     } else if (matchw("const")) {
-        return Token::Const;
+        return TokenType::Const;
     } else if (matchw("if")) {
-        return Token::If;
+        return TokenType::If;
     } else if (matchw("int")) {
-        return Token::Int;
+        return TokenType::Int;
     } else if (matchw("return")) {
-        return Token::Return;
+        return TokenType::Return;
     } else if (matchw(">>=")) {
-        return Token::RightAssign;
+        return TokenType::RightAssign;
     } else if (matchw("<<=")) {
-        return Token::LeftAssign;
+        return TokenType::LeftAssign;
     } else if (matchw("+=")) {
-        return Token::AddAssign;
+        return TokenType::AddAssign;
     } else if (matchw("-=")) {
-        return Token::SubAssign;
+        return TokenType::SubAssign;
     } else if (matchw("*=")) {
-        return Token::MulAssign;
+        return TokenType::MulAssign;
     } else if (matchw("/=")) {
-        return Token::DivAssign;
+        return TokenType::DivAssign;
     } else if (matchw("%=")) {
-        return Token::ModAssign;
+        return TokenType::ModAssign;
     } else if (matchw("&=")) {
-        return Token::AndAssign;
+        return TokenType::AndAssign;
     } else if (matchw("^=")) {
-        return Token::XorAssign;
+        return TokenType::XorAssign;
     } else if (matchw("|=")) {
-        return Token::OrAssign;
+        return TokenType::OrAssign;
     } else if (matchw("++")) {
-        return Token::IncOp;
+        return TokenType::IncOp;
     } else if (matchw("--")) {
-        return Token::DecOp;
+        return TokenType::DecOp;
     } else if (matchw("==")) {
-        return Token::EqOp;
+        return TokenType::EqOp;
     } else if (matchw("!=")) {
-        return Token::NeOp;
+        return TokenType::NeOp;
     } else if (matchw("||")) {
-        return Token::OrOp;
+        return TokenType::OrOp;
     } else if (matchw("&&")) {
-        return Token::AndOp;
+        return TokenType::AndOp;
     } else if (matchw(">=")) {
-        return Token::GeOp;
+        return TokenType::GeOp;
     } else if (matchw("<=")) {
-        return Token::LeOp;
+        return TokenType::LeOp;
     } else if (match("[;\\{\\},:=\\(\\)\\[\\].&!~\\-\\+\\*/%<>^\\|?]")) {
-        return Token::Punctuator; 
+        return TokenType::Punctuator; 
     } else if (match("[A-Za-z_][A-Za-z0-9_]*")) {
-        return Token::Identifier;
+        return TokenType::Identifier;
     } else if (match("[0-9]+")) {
-        return Token::IntegerConstant;
+        return TokenType::IntegerConstant;
     }
     #undef match
     ERROR("Unknown token:" << next_token_string_);
-    return Token::Error;
+    return TokenType::Error;
 }

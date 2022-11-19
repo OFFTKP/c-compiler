@@ -4,7 +4,7 @@
 
 bool BooleanEvaluator::Evaluate(const std::string& expression) {
     #define err ERROR("Syntax error while evaluating boolean expression: " << expression); return false
-    std::vector<Token> tokens;
+    std::vector<TokenType> tokens;
     for (auto c : expression) {
         switch (c) {
             #define push(token) tokens.push_back(token); break;
@@ -42,12 +42,12 @@ bool BooleanEvaluator::Evaluate(const std::string& expression) {
                 case FALSE: {
                     if (r == TRUE || r == FALSE) {
                         if (m == AND) {
-                            tokens[i - 2] = static_cast<Token>(l && r);
+                            tokens[i - 2] = static_cast<TokenType>(l && r);
                             tokens.erase(tokens.begin() + i);
                             tokens.erase(tokens.begin() + (i - 1));
                             replaced = true;
                         } else if (m == OR) {
-                            tokens[i - 2] = static_cast<Token>(l || r);
+                            tokens[i - 2] = static_cast<TokenType>(l || r);
                             tokens.erase(tokens.begin() + i);
                             tokens.erase(tokens.begin() + (i - 1));
                             replaced = true;
@@ -57,7 +57,7 @@ bool BooleanEvaluator::Evaluate(const std::string& expression) {
                 }
                 case NOT: {
                     if (m == TRUE || m == FALSE) {
-                        tokens[i - 2] = static_cast<Token>(!m);
+                        tokens[i - 2] = static_cast<TokenType>(!m);
                         tokens.erase(tokens.begin() + (i - 1));
                         replaced = true;
                     }
@@ -66,7 +66,7 @@ bool BooleanEvaluator::Evaluate(const std::string& expression) {
                 case LPAR: {
                     if (m == TRUE || m == FALSE) {
                         if (r == RPAR) {
-                            tokens[i - 2] = static_cast<Token>(m);
+                            tokens[i - 2] = static_cast<TokenType>(m);
                             tokens.erase(tokens.begin() + i);
                             tokens.erase(tokens.begin() + (i - 1));
                             replaced = true;

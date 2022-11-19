@@ -1,13 +1,13 @@
 #ifndef TOKEN_HXX
 #define TOKEN_HXX
-enum class Token {
+enum class TokenType {
     Error,
     #define DEF(x,y) x = y,
     #include <token/tokens.def>
     #undef DEF
 };
 
-static inline std::ostream & operator << (std::ostream &o, Token e) {
+static inline std::ostream & operator << (std::ostream &o, TokenType e) {
     switch ((int)e) {
         #define DEF(x, y) case (int)y: return o << std::string(#x);
         #include <token/tokens.def>
