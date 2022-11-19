@@ -14,7 +14,7 @@ Lexer::Lexer(const std::string& input)
 
 Lexer::~Lexer() {}
 
-std::tuple<TokenType, std::string> Lexer::GetNextTokenType()
+Token Lexer::GetNextTokenType()
 {
     ScopeGuard guard([&]() {
         next_token_string_ = "";
@@ -202,7 +202,7 @@ TokenType Lexer::get_type()
     } else if (match("[A-Za-z_][A-Za-z0-9_]*")) {
         return TokenType::Identifier;
     } else if (match("[0-9]+")) {
-        return TokenType::IntegerConstant;
+        return TokenType::Constant;
     }
     #undef match
     ERROR("Unknown token:" << next_token_string_);

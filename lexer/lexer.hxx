@@ -9,7 +9,7 @@ public:
     Lexer(const std::string& input);
     ~Lexer();
 
-    std::tuple<TokenType, std::string> GetNextTokenType();
+    Token GetNextTokenType();
 private:
     const std::string& input_;
     std::string::const_iterator index_;

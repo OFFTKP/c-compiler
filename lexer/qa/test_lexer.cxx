@@ -6,15 +6,15 @@
 #include <vector>
 
 class TestLexer : public TestBase {
-    std::vector<std::tuple<TokenType, std::string>> lexFile(std::string src);
+    std::vector<Token> lexFile(std::string src);
     void lexTestFiles();
     CPPUNIT_TEST_SUITE(TestLexer);
     CPPUNIT_TEST(lexTestFiles);
     CPPUNIT_TEST_SUITE_END();
 };
 
-std::vector<std::tuple<TokenType, std::string>> TestLexer::lexFile(std::string src) {
-    std::vector<std::tuple<TokenType, std::string>> ret;
+std::vector<Token> TestLexer::lexFile(std::string src) {
+    std::vector<Token> ret;
     Preprocessor preprocessor(src, "");
     src = preprocessor.Process();
     Lexer lexer(src);
