@@ -9,16 +9,19 @@ int yylex();
 char* yyget_text();
 
 int main(int argc, char** argv) {
-    if (argc != 3)
+    if (argc != 4)
         return 1;
-    FILE* fptr = fopen(argv[1], "r");
-    FILE* optr = fopen(argv[2], "w");
-    yyset_in(fptr);
-    yyset_out(NULL);
-    int tok = 0;
-    while (tok = yylex())
-        fprintf(optr, "%s %d\n", yyget_text(), tok);
-    fclose(fptr);
-    fclose(optr);
+    if (argv[1][0] == 'l') {
+        // Lex file
+        FILE* fptr = fopen(argv[2], "r");
+        FILE* optr = fopen(argv[3], "w");
+        yyset_in(fptr);
+        yyset_out(NULL);
+        int tok = 0;
+        while (tok = yylex())
+            fprintf(optr, "%s %d\n", yyget_text(), tok);
+        fclose(fptr);
+        fclose(optr);
+    }
     return 0;
 }

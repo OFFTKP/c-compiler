@@ -44,10 +44,9 @@ char Lexer::prev() {
 bool Lexer::check(char c)
 {
     if (is_string_literal_) {
+        next_token_string_ += c;
         if (c == '"' && prev() != '\\')
             return false;
-        // Add any character other than " to the string
-        next_token_string_ += c;
         return true;
     }
 
@@ -134,6 +133,7 @@ bool Lexer::check(char c)
         }
         case '"': {
             is_string_literal_ = true;
+            next_token_string_ += c;
             return true;
         }
         default: {

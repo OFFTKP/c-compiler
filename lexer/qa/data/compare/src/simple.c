@@ -10,4 +10,6 @@ int main(int argc, char** argv) {
     if (i >= 4 && i <= 8)
         return 1;
     const char* str = "this is a string//literal += 100||";
+    printf("the str: %s", str);
+    return 1 + 1 / (5*2);
 }

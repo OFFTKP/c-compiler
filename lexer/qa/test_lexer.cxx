@@ -6,41 +6,48 @@
 #include <vector>
 
 class TestLexer : public TestBase {
-    std::vector<Token> lexFile(std::string src);
+    std::string lexFile(std::string src);
     void lexTestFiles();
     CPPUNIT_TEST_SUITE(TestLexer);
     CPPUNIT_TEST(lexTestFiles);
     CPPUNIT_TEST_SUITE_END();
 };
 
-std::vector<Token> TestLexer::lexFile(std::string src) {
-    std::vector<Token> ret;
+std::string TestLexer::lexFile(std::string src) {
+    std::stringstream ss;
+    std::vector<Token> tokens;
     Preprocessor preprocessor(src, "");
     src = preprocessor.Process();
     Lexer lexer(src);
     TokenType token = TokenType::Empty;
     while (token != TokenType::Eof) {
         auto [temptoken, name] = lexer.GetNextTokenType();
-        ret.push_back({temptoken, name});
+        tokens.push_back({temptoken, name});
         token = temptoken;
     }
+    for (size_t i = 0; i < tokens.size() - 1; i++) {
+        const auto& [type, value] = tokens[i];
+        ss << value << " " << static_cast<int>(type) << "\n";
+    }
+    std::string ret = ss.str();
     return ret;
 }
 
 void TestLexer::lexTestFiles() {
-    auto files = getDataFiles();
-    for (auto& path : files) {
-        std::cout << "Now testing: " << path << std::endl;
-        CPPUNIT_ASSERT(std::filesystem::is_regular_file(path));
-        std::ifstream ifs(path);
-        CPPUNIT_ASSERT(ifs.is_open() && ifs.good());
-        std::stringstream ss;
-        ss << ifs.rdbuf();
-        auto k = lexFile(ss.str());
-        for (auto [_, name] : k) {
-            std::cout << name << std::endl;
+    auto src_files = getDataFiles("compare/src");
+    auto expected_files = getDataFiles("compare/expected");
+    for (size_t i = 0; i < src_files.size(); i++) {
+        auto src = getSource(src_files[i]);
+        auto expected = getSource(expected_files[i]);
+        auto actual = lexFile(src);
+        if (expected != actual) {
+            // Go line by line to check exactly what doesn't match
+            auto actual_vec = getLines(actual);
+            auto expected_vec = getLines(expected);
+            for (size_t i = 0; i < actual_vec.size(); i++) {
+                CPPUNIT_ASSERT_EQUAL_MESSAGE("Results don't match!", expected_vec[i], actual_vec[i]);
+            }
         }
-        // CPPUNIT_ASSERT(false);
     }
 }
 
