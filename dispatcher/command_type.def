@@ -1,4 +1,4 @@
-DEF(LEX, 1, "-l", "--lex",
+DEF(LEX, 1, "-l", "--lex", "Run the lexer on a file",
     // TODO: make lexer action and preprocessor handle multiple files
     auto cur = args_[0];
     if (std::filesystem::is_regular_file(cur)) {
@@ -21,7 +21,7 @@ DEF(LEX, 1, "-l", "--lex",
         ERROR("File not found: " << cur);
     }
 )
-DEF(PREPROCESS, 1, "-p", "--preprocess",
+DEF(PREPROCESS, 1, "-p", "--preprocess", "Run the preprocessor on a file",
     auto cur = args_[0];
     if (std::filesystem::is_regular_file(cur)) {
         std::ifstream ifs(cur);
@@ -35,20 +35,13 @@ DEF(PREPROCESS, 1, "-p", "--preprocess",
         ERROR("File not found: " << cur);
     }
 )
-DEF(VERSION, 0, "-v", "--version",
+DEF(VERSION, 0, "-v", "--version", "Display the version",
     std::cout << CompilerName << " by " << CompilerAuthor << std::endl;
     std::cout << "Version: " << CompilerVersion << std::endl;
 )
-DEF(DUMP_ERRORS, 0, "-de", "--dump-errors",
-    Variables::dumpErrors();
-)
-DEF(DUMP_WARNINGS, 0, "-dw", "--dump-warnings",
-    Variables::dumpWarnings();
-)
-DEF(DUMP_LOG, 0, "-dl", "--dump-log",
-    Variables::dumpLog();
-)
-DEF(DUMP_DEFINES, 0, "-dd", "--dump-defines",
+DEF(DUMP_DEFINES, 0, "-dd", "--dump-defines", "Dump preprocessor defines of the last processed file",
     Preprocessor::dumpDefines();
 )
-DEF(ASK_ARGS, 0, "-TODO", "--TODO", exit(1);)
+DEF(HELP, 0, "-h", "--help", "Displays this dialog",
+    Global::showHelp();
+)

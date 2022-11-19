@@ -10,11 +10,12 @@ int Dispatcher::Dispatch(std::vector<Command> commands)
         CommandType type = command.type;
         std::unique_ptr<Action> action;
         switch (type) {
-            #define DEF(type, arg_count, command_short, command_long, ...) case CommandType::type: { action = std::make_unique<Action##type>(args); break; }
+            #define DEF(type, arg_count, command_short, command_long, help, ...) case CommandType::type: { action = std::make_unique<Action##type>(args); break; }
             #include <dispatcher/command_type.def>
             #undef DEF
         }
-        actions.push_back(std::move(action));
+        if (action)
+            actions.push_back(std::move(action));
     }
     for (auto& action : actions) {
         (*action)();

@@ -28,7 +28,7 @@ Token Lexer::GetNextTokenType()
         }
     }
     if (is_string_literal_)
-        throw std::runtime_error("Unfinished string literal!");
+        ERROR("Unfinished string literal")
     return { TokenType::Eof, "" };
 }
 

@@ -10,8 +10,8 @@ int main() {
     runner.addTest(suite);
     runner.setOutputter(new CppUnit::CompilerOutputter(&runner.result(), std::cerr));
     bool wasSuccessful = runner.run();
-    Variables::dumpLog();
-    Variables::dumpWarnings();
-    Variables::dumpErrors();
+    Global::dumpLog();
+    Global::dumpWarnings();
+    Global::dumpErrors();
     return wasSuccessful ? 0 : 1;
 }

@@ -39,6 +39,7 @@ private:
     void initialize_defines();
     std::string simplify_expression(const std::string&);
     static void dump_defines_impl(const Defines& defines, const FuncDefines& function_defines);
+    static const std::unordered_map<std::string, std::string>& get_standard_includes();
 
     const std::string& input_;
     Defines defines_;

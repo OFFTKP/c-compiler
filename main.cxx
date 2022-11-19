@@ -1,11 +1,29 @@
 #include <dispatcher/dispatcher.hxx>
+#include <misc/scope_guard.hxx>
 #include <common/log.hxx>
 
-int main(int argc, char** argv) {
+int main(int argc, char** argv_raw) {
+    ScopeGuard guard([]() {
+        #ifndef NDEBUG
+        Global::dumpLog();
+        #endif
+        Global::dumpWarnings();
+        Global::dumpErrors();
+    });
+    std::vector<std::string> argv;
     if (argc <= 1)
     {
+        argv.push_back("Placeholder");
         // Ask for arguments
-        Dispatcher::Dispatch({ { CommandType::VERSION }, { CommandType::ASK_ARGS } });
+        std::string line, item;
+        std::getline(std::cin, line);
+        std::stringstream ss(line);
+        while (std::getline(ss, item, ' ')) {
+            argv.push_back(item);
+        }
+        argc = argv.size();
+    } else {
+        argv = std::vector<std::string>(argv_raw, argv_raw + argc);
     }
     std::vector<Command> commands;
     CommandType current_type = CommandType::NONE;
@@ -25,7 +43,10 @@ int main(int argc, char** argv) {
             }
             current_type = Serializer::Serialize(argv[i]);
         } else {
-            current_arguments.push_back(argv[i]);
+            if (current_type != CommandType::NONE)
+                current_arguments.push_back(argv[i]);
+            else
+                ERROR("Unexpected argument: " << argv[i])
         }
     }
     int expected_arg_size = getArgSize(current_type);
@@ -36,6 +57,7 @@ int main(int argc, char** argv) {
         commands.push_back({ current_type, current_arguments });
     } else {
         ERROR("Wrong number of arguments - Expected:" << expected_arg_size << " Got: " << current_arguments.size());
+        return 1;
     }
     auto ret = Dispatcher::Dispatch(commands);
     return ret;

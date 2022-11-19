@@ -180,13 +180,11 @@ void Preprocessor::process_impl(const std::string& input, std::filesystem::path 
                     throw_error(PreprocessorError::Directive, match[1]);
                 } else if (std::regex_match(line, match, if_regex)) {
                     // #if
-                    // TODO: error no body?
                     std::string unprocessed_expr = match[1];
                     auto expr = simplify_expression(unprocessed_expr);
                     conditional = BooleanEvaluator::Evaluate(expr);
                 } else if (std::regex_match(line, match, undef_regex)) {
                     // #undef
-                    // TODO: warning not defined (Error?)
                     defines_.erase(match[1]);
                     function_defines_.erase(match[1]);
                 } else if (std::regex_match(line, match, ifdef_regex)) {
@@ -249,7 +247,7 @@ std::string Preprocessor::simplify_expression(const std::string& expression) {
 
 size_t Preprocessor::include_impl(std::vector<std::string>& lines, std::filesystem::path path, size_t i) {
     current_include_depth_++;
-    if (current_include_depth_ > Variables::GetMaxIncludeDepth())
+    if (current_include_depth_ > Global::GetMaxIncludeDepth())
         throw_error(PreprocessorError::IncludeDepth);
     if (!std::filesystem::is_regular_file(path))
         throw_error(PreprocessorError::IncludeNotFound);
@@ -269,7 +267,7 @@ void Preprocessor::throw_error(PreprocessorError error, std::string message) {
     ss << "Preprocessor - " << current_path_.string() << ":" << current_line_ << " - ";
     switch (error) {
         case PreprocessorError::IncludeDepth: {
-            ss << "Max include depth reached: " << Variables::GetMaxIncludeDepth();
+            ss << "Max include depth reached: " << Global::GetMaxIncludeDepth();
             break;
         }
         case PreprocessorError::IncludeNotFound: {
@@ -400,7 +398,16 @@ int Preprocessor::handle_args(const std::string& args, std::string& value) {
 
 void Preprocessor::initialize_defines() {
     define("NULL", "0");
-    if (!Variables::GetDebug())
+    if (!Global::GetDebug())
         define("NDEBUG");
     define("__STDC__", "1");
+}
+
+const std::unordered_map<std::string, std::string>& Preprocessor::get_standard_includes() {
+    static std::unordered_map<std::string, std::string> includes {
+        #define DEF(include, path) { include, path },
+        #include <preprocessor/standard_paths.txt>
+        #undef DEF
+    };
+    return includes;
 }

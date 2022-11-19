@@ -21,7 +21,7 @@ protected:
     const std::vector<std::string>& args_;
 };
 
-#define DEF(type, arg_count, command_short, command_long, ...)  ACTION(Action##type, __VA_ARGS__)
+#define DEF(type, arg_count, command_short, command_long, help, ...)  ACTION(Action##type, __VA_ARGS__)
 #include <dispatcher/command_type.def>
 #undef DEF
 

@@ -13,7 +13,7 @@ struct Command {
 struct Serializer {
     static CommandType Serialize(const std::string& command) {
         switch (hash(command.c_str())) {
-            #define DEF(type, arg_count, command_short, command_long, ...) case hash(command_short): case hash(command_long): return CommandType::type;
+            #define DEF(type, arg_count, command_short, command_long, help, ...) case hash(command_short): case hash(command_long): return CommandType::type;
             #include <dispatcher/command_type.def>
             #undef DEF
             default:

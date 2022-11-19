@@ -5,7 +5,7 @@
 #include <iostream>
 
 // Holds the global compiler state
-struct Variables {
+struct Global {
     #define VAR(type, name, default) static type& Get##name() { static type name = default; return name; }
     VAR(int, MaxIncludeDepth, 200)
     VAR(std::vector<std::string>, Errors, {})
@@ -15,27 +15,30 @@ struct Variables {
     #undef VAR
 
     static void dumpLog() {
-        auto& log = Variables::GetLog();
-        std::cout << "Dumping log:" << std::endl;
+        auto& log = Global::GetLog();
         for (const auto& entry : log) {
             std::cout << entry << std::endl;
         }
     }
 
     static void dumpWarnings() {
-        auto& warnings = Variables::GetWarnings();
-        std::cout << "Dumping warnings:" << std::endl;
+        auto& warnings = Global::GetWarnings();
         for (const auto& entry : warnings) {
             std::cout << entry << std::endl;
         }
     }
     
     static void dumpErrors() {
-        auto& errors = Variables::GetErrors();
-        std::cout << "Dumping errors:" << std::endl;
+        auto& errors = Global::GetErrors();
         for (const auto& entry : errors) {
             std::cout << entry << std::endl;
         }
+    }
+
+    static void showHelp() {
+        #define DEF(type, arg_count, command_short, command_long, help, ...) std::cout << command_short ", " command_long << ": " << help << std::endl;
+        #include <dispatcher/command_type.def>
+        #undef DEF
     }
 };
 #endif
