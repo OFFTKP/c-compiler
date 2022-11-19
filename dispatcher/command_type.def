@@ -7,7 +7,7 @@ DEF(LEX, 1, "-l", "--lex", "Run the lexer on a file",
         ssrc << ifs.rdbuf();
         std::string src = ssrc.str();
         std::vector<Token> tokens;
-        Preprocessor preprocessor(src, cur);
+        Preprocessor preprocessor(src);
         src = preprocessor.Process();
         Lexer lexer(src);
         TokenType cur_token = TokenType::Empty;
@@ -28,7 +28,7 @@ DEF(PREPROCESS, 1, "-p", "--preprocess", "Run the preprocessor on a file",
         std::stringstream ssrc;
         ssrc << ifs.rdbuf();
         std::string src = ssrc.str();
-        Preprocessor preprocessor(src, cur);
+        Preprocessor preprocessor(src);
         src = preprocessor.Process();
         std::cout << src << std::endl;
     } else {

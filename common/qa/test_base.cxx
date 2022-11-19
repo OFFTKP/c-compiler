@@ -1,4 +1,5 @@
 #include <common/qa/test_base.hxx>
+#include <common/state.hxx>
 #include <filesystem>
 
 std::vector<std::string> TestBase::getDataFiles(std::string suffix) {
@@ -18,6 +19,7 @@ std::vector<std::string> TestBase::getDataFiles(std::string suffix) {
 }
 
 std::string TestBase::getSource(const std::string& path) {
+    Global::GetCurrentPath() = path;
     CPPUNIT_ASSERT(std::filesystem::is_regular_file(path));
     std::ifstream ifs(path);
     CPPUNIT_ASSERT(ifs.is_open() && ifs.good());

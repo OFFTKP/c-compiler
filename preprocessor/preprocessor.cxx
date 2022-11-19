@@ -13,9 +13,9 @@
 constexpr auto word_start = R"!!(([\W]|^))!!";
 constexpr auto word_end = R"!!(([\W]|$))!!";
 
-Preprocessor::Preprocessor(const std::string& input, std::filesystem::path path)
+Preprocessor::Preprocessor(const std::string& input)
     : input_(input)
-    , first_file_path_(path)
+    , first_file_path_(Global::GetCurrentPath())
 {}
 
 Preprocessor::~Preprocessor() {

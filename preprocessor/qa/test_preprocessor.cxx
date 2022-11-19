@@ -21,7 +21,7 @@ void TestPreprocessor::preprocessConditionalCompilationFiles() {
     const auto& files = getDataFiles("conditional_compilation");
     for (auto& path : files) {
         auto str = getSource(path);
-        Preprocessor preprocessor(str, path);
+        Preprocessor preprocessor(str);
         preprocessor.Process();
         std::string message = "Failed file: " + path;
         bool passed = preprocessor.IsDefined(__TEST_PASSED);
@@ -36,7 +36,7 @@ void TestPreprocessor::preprocessErrorFiles() {
     const auto& files = getDataFiles("must_error");
     for (auto& path : files) {
         auto str = getSource(path);
-        Preprocessor preprocessor(str, path);
+        Preprocessor preprocessor(str);
         try {
             preprocessor.Process();
         } catch (const std::exception& ex) {
@@ -66,7 +66,7 @@ void TestPreprocessor::preprocessPredefinedMacroFiles() {
     {
         auto cur_path = path + "date.c";
         auto str = getSource(cur_path);
-        Preprocessor preprocessor(str, cur_path);
+        Preprocessor preprocessor(str);
         auto actual = preprocessor.Process();
         auto time = std::time(nullptr);
         auto localtime = *std::localtime(&time);
@@ -78,7 +78,7 @@ void TestPreprocessor::preprocessPredefinedMacroFiles() {
     {
         auto cur_path = path + "time.c";
         auto str = getSource(cur_path);
-        Preprocessor preprocessor(str, cur_path);
+        Preprocessor preprocessor(str);
         auto actual = preprocessor.Process();
         auto time = std::time(nullptr);
         auto localtime = *std::localtime(&time);
@@ -90,7 +90,7 @@ void TestPreprocessor::preprocessPredefinedMacroFiles() {
     {
         auto cur_path = path + "file.c";
         auto str = getSource(cur_path);
-        Preprocessor preprocessor(str, cur_path);
+        Preprocessor preprocessor(str);
         auto actual = preprocessor.Process();
         std::stringstream ss;
         ss << '"' << cur_path << '"';
@@ -100,7 +100,7 @@ void TestPreprocessor::preprocessPredefinedMacroFiles() {
     {
         auto cur_path = path + "line.c";
         auto str = getSource(cur_path);
-        Preprocessor preprocessor(str, cur_path);
+        Preprocessor preprocessor(str);
         auto actual = preprocessor.Process();
         std::string expected = 
             "int a = 1;\n"
@@ -118,7 +118,7 @@ void TestPreprocessor::preprocessFilesWithExpected() {
     for (size_t i = 0; i < src_files.size(); i++) {
         auto src = getSource(src_files[i]);
         auto expected = getSource(expected_files[i]);
-        Preprocessor preprocessor(src, src_files[i]);
+        Preprocessor preprocessor(src);
         try {
             auto actual = preprocessor.Process();
             CPPUNIT_ASSERT_EQUAL_MESSAGE("Sources don't match!", expected, actual);

@@ -17,7 +17,7 @@ class TestLexer : public TestBase {
 std::string TestLexer::lexFile(std::string src) {
     std::stringstream ss;
     std::vector<Token> tokens;
-    Preprocessor preprocessor(src, "");
+    Preprocessor preprocessor(src);
     src = preprocessor.Process();
     Lexer lexer(src);
     TokenType token = TokenType::Empty;

@@ -12,6 +12,7 @@ struct Global {
     VAR(std::vector<std::string>, Warnings, {})
     VAR(std::vector<std::string>, Log, {})
     VAR(bool, Debug, false)
+    VAR(std::string, CurrentPath, "");
     #undef VAR
 
     static void dumpLog() {

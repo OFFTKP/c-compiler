@@ -10,8 +10,9 @@
 using Defines = std::unordered_map<std::string, std::string>;
 using FuncDefines = std::unordered_map<std::string, std::tuple<int, std::string>>;
 
-struct Preprocessor {
-    Preprocessor(const std::string& input, std::filesystem::path path);
+class Preprocessor {
+public:
+    Preprocessor(const std::string& input);
     ~Preprocessor();
 
     std::string Process();

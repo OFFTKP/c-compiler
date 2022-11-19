@@ -24,6 +24,7 @@ add_executable(
     ${RootPath}/main.cxx
     ${RootPath}/lexer/lexer.cxx
     ${RootPath}/preprocessor/preprocessor.cxx
+    ${RootPath}/parser/parser.cxx
     ${RootPath}/dispatcher/dispatcher.cxx
     ${RootPath}/boolean_evaluator/boolean_evaluator.cxx
 )
