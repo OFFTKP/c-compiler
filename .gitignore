@@ -3,3 +3,4 @@ a.out
 build/
 Testing/
 *.e
+out/

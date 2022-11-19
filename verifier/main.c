@@ -22,6 +22,7 @@ int main(int argc, char** argv) {
             fprintf(optr, "%s %d\n", yyget_text(), tok);
         fclose(fptr);
         fclose(optr);
+        printf("[Verifier] Ran lexer on %s\n", argv[2]);
     }
     return 0;
 }

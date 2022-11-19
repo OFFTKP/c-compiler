@@ -161,6 +161,10 @@ TokenType Lexer::get_type()
         return TokenType::Int;
     } else if (matchw("return")) {
         return TokenType::Return;
+    } else if (matchw(">>")) {
+        return TokenType::RightOp;
+    } else if (matchw("<<")) {
+        return TokenType::LeftOp;
     } else if (matchw(">>=")) {
         return TokenType::RightAssign;
     } else if (matchw("<<=")) {

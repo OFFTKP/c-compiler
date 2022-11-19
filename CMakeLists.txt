@@ -5,7 +5,7 @@ set(RootPath ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_subdirectory("verifier")
 # Create the expected outcome files
-file(GLOB LexerDataFiles "lexer/qa/data/compare/src/*.*")
+file(GLOB LexerDataFiles "lexer/qa/data/compare/src/*.c")
 set(VerifierCommands)
 foreach(file ${LexerDataFiles})
     get_filename_component(filename ${file} NAME)

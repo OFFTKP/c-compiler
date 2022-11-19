@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <tuple>
 #include <vector>
+#include <fstream>
 
 class TestLexer : public TestBase {
     std::string lexFile(std::string src);
@@ -35,11 +36,17 @@ std::string TestLexer::lexFile(std::string src) {
 
 void TestLexer::lexTestFiles() {
     auto src_files = getDataFiles("compare/src");
-    auto expected_files = getDataFiles("compare/expected");
+    auto expected_path = getDataPath() + "/compare/expected/";
     for (size_t i = 0; i < src_files.size(); i++) {
+        auto filename = std::filesystem::path(src_files[i]).filename().string();
         auto src = getSource(src_files[i]);
-        auto expected = getSource(expected_files[i]);
+        auto expected = getSource(expected_path + filename + ".e");
         auto actual = lexFile(src);
+        // Output the generated file
+        auto outpath = getDataPath() + "/compare/src/out/";
+        std::filesystem::create_directories(outpath);
+        std::ofstream ofs(outpath + filename + ".e");
+        ofs << actual;
         if (expected != actual) {
             // Go line by line to check exactly what doesn't match
             auto actual_vec = getLines(actual);
