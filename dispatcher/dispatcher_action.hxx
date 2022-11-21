@@ -3,6 +3,7 @@
 #include <preprocessor/preprocessor.hxx>
 #include <dispatcher/command.hxx>
 #include <lexer/lexer.hxx>
+#include <parser/parser.hxx>
 #include <common/strings.hxx>
 #include <common/log.hxx>
 #include <filesystem>

@@ -3,13 +3,16 @@
 #include <string>
 #include <tuple>
 #include <token/token.hxx>
+#include <common/uncopyable.hxx>
 
-class Lexer {
+class Lexer : public Uncopyable {
 public:
     Lexer(const std::string& input);
     ~Lexer();
 
+    std::vector<Token> Lex();
     Token GetNextTokenType();
+    void Restart();
 private:
     const std::string& input_;
     std::string::const_iterator index_;

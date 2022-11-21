@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.2)
 enable_testing()
 project(Compiler)
+set(CMAKE_CXX_STANDARD 20)
 set(RootPath ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_subdirectory("verifier")

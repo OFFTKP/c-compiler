@@ -1,6 +1,7 @@
 #ifndef PREPROCESSOR_HXX
 #define PREPROCESSOR_HXX
 #include <preprocessor/preprocessor_error.hxx>
+#include <common/uncopyable.hxx>
 #include <optional>
 #include <vector>
 #include <string>
@@ -10,7 +11,7 @@
 using Defines = std::unordered_map<std::string, std::string>;
 using FuncDefines = std::unordered_map<std::string, std::tuple<int, std::string>>;
 
-class Preprocessor {
+class Preprocessor : public Uncopyable {
 public:
     Preprocessor(const std::string& input);
     ~Preprocessor();

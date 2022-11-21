@@ -1,6 +1,7 @@
 #ifndef TOKEN_HXX
 #define TOKEN_HXX
 #include <misc/json.hpp>
+#include <tuple>
 
 enum class TokenType {
     Error,

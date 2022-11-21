@@ -14,6 +14,25 @@ Lexer::Lexer(const std::string& input)
 
 Lexer::~Lexer() {}
 
+std::vector<Token> Lexer::Lex() {
+    std::vector<Token> tokens;
+    bool is_eof = false;
+    while (!is_eof) {
+        auto tok = GetNextTokenType();
+        auto [type, _] = tok;
+        is_eof = (type == TokenType::Eof);
+        tokens.push_back(tok);
+    }
+    return tokens;
+}
+
+void Lexer::Restart() {
+    is_string_literal_ = false;
+    next_token_string_ = "";
+    next_token_ = TokenType::Empty;
+    index_ = input_.begin();
+}
+
 Token Lexer::GetNextTokenType()
 {
     ScopeGuard guard([&]() {
@@ -153,6 +172,8 @@ TokenType Lexer::get_type()
         return TokenType::StringLiteral;
     } else if (matchw("char")) {
         return TokenType::Char;
+    } else if (matchw("double")) {
+        return TokenType::Double;
     } else if (matchw("const")) {
         return TokenType::Const;
     } else if (matchw("if")) {
@@ -201,6 +222,16 @@ TokenType Lexer::get_type()
         return TokenType::GeOp;
     } else if (matchw("<=")) {
         return TokenType::LeOp;
+    } else if (matchw("(")) {
+        return TokenType::LPar;
+    } else if (matchw(")")) {
+        return TokenType::RPar;
+    } else if (matchw("{")) {
+        return TokenType::LBra;
+    } else if (matchw("}")) {
+        return TokenType::RBra;
+    } else if (matchw(",")) {
+        return TokenType::Comma;
     } else if (match("[;\\{\\},:=\\(\\)\\[\\].&!~\\-\\+\\*/%<>^\\|?]")) {
         return TokenType::Punctuator; 
     } else if (match("[A-Za-z_][A-Za-z0-9_]*")) {

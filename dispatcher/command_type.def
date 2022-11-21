@@ -35,6 +35,19 @@ DEF(PREPROCESS, 1, "-p", "--preprocess", "Run the preprocessor on a file",
         ERROR("File not found: " << cur);
     }
 )
+DEF(PARSE, 1, "-y", "--parse", "Run the parser on a file",
+    auto cur = args_[0];
+    if (std::filesystem::is_regular_file(cur)) {
+        std::ifstream ifs(cur);
+        std::stringstream ssrc;
+        ssrc << ifs.rdbuf();
+        std::string src = ssrc.str();
+        Parser parser(src);
+        parser.Parse();
+    } else {
+        ERROR("File not found: " << cur);
+    }
+)
 DEF(VERSION, 0, "-v", "--version", "Display the version",
     std::cout << CompilerName << " by " << CompilerAuthor << std::endl;
     std::cout << "Version: " << CompilerVersion << std::endl;
