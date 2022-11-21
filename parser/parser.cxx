@@ -3,13 +3,12 @@
 #include <parser/parser_defines.hxx>
 #include <preprocessor/preprocessor.hxx>
 #include <common/log.hxx>
+#include <regex>
 
 Parser::Parser(const std::string& input)
     : input_(input)
     , index_(nullptr)
     , start_node_{}
-    , current_node_{}
-    , uncommited_node_{}
 {
 }
 
@@ -30,7 +29,7 @@ void Parser::Parse() {
     ++index_;
 }
 
-const ParserNode& Parser::GetStartNode() {
+const ASTNodePtr& Parser::GetStartNode() {
     if (index_ != tokens_.end()) {
         ERROR("Parse failed before GetStartNode");
         throw_error();
@@ -39,123 +38,152 @@ const ParserNode& Parser::GetStartNode() {
 }
 
 void Parser::parse_impl() {
-    if (!is_translation_unit())
+    if (!(start_node_ = is_translation_unit()))
         throw_error();
 }
 
-bool Parser::is_translation_unit() {
-    start_node_.next_nodes.push_back(std::make_shared<ParserNode>(ParserNodeType::TranslationUnit));
-    current_node_ = start_node_.next_nodes[0];
-    if (is_external_declaration()) {
-        return MATCH_ANY(TokenType::Eof);
-    } else {
-        return false;
+ASTNodePtr Parser::is_translation_unit() {
+    if (auto ext = is_external_declaration()) {
+        if (MATCH_ANY(TokenType::Eof)) {
+            std::vector<ASTNodePtr> next;
+            next.push_back(std::move(ext));
+            start_node_ = MakeNode(ASTNodeType::Start, std::move(next), "Start");
+            return std::move(start_node_);
+        }
+        throw_error();
     }
+    return nullptr;
 }
 
-bool Parser::is_external_declaration() {
-    auto temp = std::make_shared<ParserNode>(ParserNodeType::ExternalDeclaration);
-    current_node_->next_nodes.push_back(temp);
-    current_node_ = temp;
+ASTNodePtr Parser::is_external_declaration() {
     commit();
-    if (is_function_declaration()) {
-        if (is_external_declaration()) {
-            return true;
-        } else {
-            return true;
-        }
+    if (auto func_node = is_function_declaration()) {
+        // auto ext_node = is_external_declaration();
+        std::vector<ASTNodePtr> next;
+        next.push_back(std::move(func_node));
+        return MakeNode(ASTNodeType::ExternalDeclaration, std::move(next), GET_UNUSED_NAME("external_declaration"));
     }
     rollback();
-    return false;
+    return nullptr;
 }
 
-bool Parser::is_function_declaration() {
-    return is_type_specifier() && is_identifier() && is_function_arguments() && is_code_block();
+ASTNodePtr Parser::is_function_declaration() {
+    if (auto type_node = is_type_specifier()) {
+        if (auto id_node = is_identifier()) {
+            if (auto args_node = is_function_arguments()) {
+                if (auto block_node = is_code_block()) {
+                    auto name = "function_" + id_node->Value;
+                    name = GET_UNUSED_NAME(name);
+                    std::vector<ASTNodePtr> next;
+                    next.push_back(std::move(type_node));
+                    next.push_back(std::move(id_node));
+                    next.push_back(std::move(args_node));
+                    next.push_back(std::move(block_node));
+                    return MakeNode(ASTNodeType::FunctionDeclaration, std::move(next), std::move(name));
+                }
+            }
+        }
+        throw_error();
+    }
+    return nullptr;
 }
 
-bool Parser::is_type_specifier() {
-    return advance_if(MATCH_ANY(TokenType::Int, TokenType::Char, TokenType::Double));
+ASTNodePtr Parser::is_type_specifier() {
+    RETURN_IF_MATCH(TypeSpecifier, TokenType::Int, TokenType::Char, TokenType::Double);
 }
 
-bool Parser::is_identifier() {
-    return advance_if(MATCH_ANY(TokenType::Identifier));
+ASTNodePtr Parser::is_identifier() {
+    RETURN_IF_MATCH(Identifier, TokenType::Identifier);
 }
 
-bool Parser::is_function_arguments() {
-    if (advance_if(MATCH_ANY(TokenType::LPar))) {
-        if (is_argument_list()) {
-            if (advance_if(MATCH_ANY(TokenType::RPar))) {
-                return true;
+ASTNodePtr Parser::is_function_arguments() {
+    if (auto lpar_node = is_punctuator('(')) {
+        if (auto arg_list_node = is_argument_list()) {
+            if (auto rpar_node = is_punctuator(')')) {
+                std::vector<ASTNodePtr> next;
+                next.push_back(std::move(arg_list_node));
+                return MakeNode(ASTNodeType::FunctionArguments, std::move(next), GET_UNUSED_NAME("function_arguments"));
+            }
+        }
+        throw_error();
+    }
+    return nullptr;
+}
+
+ASTNodePtr Parser::is_punctuator(char c) {
+    bool ret = (get_token_type() == TokenType::Punctuator && get_token_value()[0] == c);
+    auto node = ret ? MakeNode(ASTNodeType::Punctuator, {}, get_token_value()) : nullptr;
+    advance_if(ret);
+    return node;
+}
+
+ASTNodePtr Parser::is_code_block() {
+    if (auto lbra_node = is_punctuator('{')) {
+        if (auto stat_node = is_statement_list()) {
+            if (auto rbra_node = is_punctuator('}')) {
+                std::vector<ASTNodePtr> next;
+                next.push_back(std::move(stat_node));
+                return MakeNode(ASTNodeType::CodeBlock, std::move(next), GET_UNUSED_NAME("code_block"));
+            }
+        }
+        throw_error();
+    }
+    return nullptr;
+}
+
+ASTNodePtr Parser::is_argument_list() {
+    if (auto arg_node = is_argument()) {
+        std::vector<ASTNodePtr> next;
+        next.push_back(std::move(arg_node));
+        auto args_node = MakeNode(ASTNodeType::ArgumentList, std::move(next), GET_UNUSED_NAME("arguments"));
+        if (auto comma_node = is_punctuator(',')) {
+            if (auto args_node2 = is_argument_list()) {
+                for (auto& arg : args_node2->Next) {
+                    args_node->Next.push_back(std::move(arg));
+                }
+                return args_node;
             } else {
-                return false;
+                throw_error();
             }
         } else {
-            return false;
+            return args_node;
         }
-    } else {
-        return false;
     }
+    return MakeNode(ASTNodeType::ArgumentList, {}, GET_UNUSED_NAME("arguments"));
 }
 
-bool Parser::is_code_block() {
-    if (advance_if(MATCH_ANY(TokenType::LBra))) {
-        if (!is_statement_list()) {
-            return false;
-        }
-        if (advance_if(MATCH_ANY(TokenType::RBra))) {
-            return true;
-        } else {
-            return false;
-        }
-    } else {
-        return false;
+ASTNodePtr Parser::is_argument() {
+    if (auto type_node = is_type_specifier()) {
+        auto id_node = is_identifier();
+        std::vector<ASTNodePtr> next;
+        next.push_back(std::move(id_node));
+        return MakeNode(ASTNodeType::Argument, std::move(next), GET_UNUSED_NAME("argument"));
     }
+    return nullptr;
 }
 
-bool Parser::is_argument_list() {
-    if (is_argument()) {
-        if (advance_if(MATCH_ANY(TokenType::Comma))) {
-            if (is_argument_list()) {
-                return true;
-            } else {
-                return false;
-            }
-        } else {
-            return true;
-        }
-    } else {
-        return true;
-    }
+ASTNodePtr Parser::is_statement_list() {
+    return MakeNode(ASTNodeType::StatementList, {}, GET_UNUSED_NAME("statement_list"));
 }
 
-bool Parser::is_argument() {
-    if (is_type_specifier()) {
-        if (is_identifier()) {
-            return true;
-        } else {
-            return true;
-        }
-    } else {
-        return false;
-    }
-    return false;
+std::string Parser::GetUML() {
+    const auto& start_node = GetStartNode();
+    uml_ss_.clear();
+    uml_ss_ << "@startuml\n";
+    uml_impl(start_node->Next);
+    uml_ss_ << "hide members\nhide circle\n";
+    uml_ss_ << "@enduml\n";
+    return uml_ss_.str();
 }
 
-bool Parser::is_statement_list() {
-    if (is_statement()) {
-        if (is_statement_list()) {
-            return true;
-        } else {
-            return false;
+void Parser::uml_impl(const std::vector<ASTNodePtr>& nodes) {
+    for (const auto& node : nodes) {
+        uml_impl(node->Next);
+        uml_ss_ << "class " << node->Value << " as \"" << std::regex_replace(node->Value, std::regex("__.*"), "") << "\"\n";
+        for (const auto& next : node->Next) {
+            uml_ss_ << node->Value << " --> " << next->Value << '\n';
         }
-    } else {
-        // Empty statement list
-        return true;
     }
-}
-
-bool Parser::is_statement() {
-    return false;
 }
 
 TokenType Parser::get_token_type() {
@@ -177,11 +205,8 @@ void Parser::throw_error() {
 
 void Parser::commit() {
     rollback_index_ = index_;
-    if (uncommited_node_)
-        current_node_->next_nodes.push_back(uncommited_node_);
 }
 
 void Parser::rollback() {
     index_ = rollback_index_;
-    uncommited_node_.reset();
 }

@@ -222,16 +222,6 @@ TokenType Lexer::get_type()
         return TokenType::GeOp;
     } else if (matchw("<=")) {
         return TokenType::LeOp;
-    } else if (matchw("(")) {
-        return TokenType::LPar;
-    } else if (matchw(")")) {
-        return TokenType::RPar;
-    } else if (matchw("{")) {
-        return TokenType::LBra;
-    } else if (matchw("}")) {
-        return TokenType::RBra;
-    } else if (matchw(",")) {
-        return TokenType::Comma;
     } else if (match("[;\\{\\},:=\\(\\)\\[\\].&!~\\-\\+\\*/%<>^\\|?]")) {
         return TokenType::Punctuator; 
     } else if (match("[A-Za-z_][A-Za-z0-9_]*")) {

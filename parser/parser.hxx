@@ -10,22 +10,25 @@ public:
     ~Parser();
 
     void Parse();
-    const ParserNode& GetStartNode();
+    const ASTNodePtr& GetStartNode();
+    std::string GetUML();
 private:
     void parse_impl();
+    void uml_impl(const std::vector<ASTNodePtr>& nodes);
 
     // Checking functions
-    bool is_translation_unit();
-    bool is_external_declaration();
-    bool is_function_declaration();
-    bool is_type_specifier();
-    bool is_identifier();
-    bool is_function_arguments();
-    bool is_code_block();
-    bool is_argument_list();
-    bool is_argument();
-    bool is_statement_list();
-    bool is_statement();
+    ASTNodePtr is_translation_unit();
+    ASTNodePtr is_external_declaration();
+    ASTNodePtr is_function_declaration();
+    ASTNodePtr is_type_specifier();
+    ASTNodePtr is_identifier();
+    ASTNodePtr is_function_arguments();
+    ASTNodePtr is_code_block();
+    ASTNodePtr is_argument_list();
+    ASTNodePtr is_argument();
+    ASTNodePtr is_statement_list();
+    ASTNodePtr is_statement();
+    ASTNodePtr is_punctuator(char c);
 
     void throw_error();
 
@@ -42,8 +45,8 @@ private:
     std::vector<Token> tokens_;
     std::vector<Token>::const_iterator index_;
     std::vector<Token>::const_iterator rollback_index_;
-    ParserNode start_node_;
-    std::shared_ptr<ParserNode> current_node_;
-    std::shared_ptr<ParserNode> uncommited_node_;
+    ASTNodePtr start_node_;
+    std::stringstream uml_ss_;
+    std::unordered_map<std::string, int> value_count_ {};
 };
 #endif

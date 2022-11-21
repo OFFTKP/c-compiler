@@ -44,6 +44,7 @@ DEF(PARSE, 1, "-y", "--parse", "Run the parser on a file",
         std::string src = ssrc.str();
         Parser parser(src);
         parser.Parse();
+        std::cout << parser.GetUML() << std::endl;
     } else {
         ERROR("File not found: " << cur);
     }
