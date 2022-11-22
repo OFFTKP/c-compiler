@@ -170,34 +170,6 @@ TokenType Lexer::get_type()
     if (is_string_literal_) {
         is_string_literal_ = false;
         return TokenType::StringLiteral;
-    } else if (matchw("char")) {
-        return TokenType::Char;
-    } else if (matchw("double")) {
-        return TokenType::Double;
-    } else if (matchw("const")) {
-        return TokenType::Const;
-    } else if (matchw("void")) {
-        return TokenType::Void;
-    } else if (matchw("short")) {
-        return TokenType::Short;
-    } else if (matchw("long")) {
-        return TokenType::Long;
-    } else if (matchw("float")) {
-        return TokenType::Float;
-    } else if (matchw("signed")) {
-        return TokenType::Signed;
-    } else if (matchw("unsigned")) {
-        return TokenType::Unsigned;
-    } else if (matchw("volatile")) {
-        return TokenType::Volatile;
-    } else if (matchw("restrict")) {
-        return TokenType::Restrict;
-    } else if (matchw("if")) {
-        return TokenType::If;
-    } else if (matchw("int")) {
-        return TokenType::Int;
-    } else if (matchw("return")) {
-        return TokenType::Return;
     } else if (matchw(">>")) {
         return TokenType::RightOp;
     } else if (matchw("<<")) {
@@ -239,7 +211,9 @@ TokenType Lexer::get_type()
     } else if (matchw("<=")) {
         return TokenType::LeOp;
     } else if (match("[;\\{\\},:=\\(\\)\\[\\].&!~\\-\\+\\*/%<>^\\|?]")) {
-        return TokenType::Punctuator; 
+        return TokenType::Punctuator;
+    } else if (auto tok = serialize_l(next_token_string_); tok != TokenType::Empty) {
+        return tok;
     } else if (match("[A-Za-z_][A-Za-z0-9_]*")) {
         return TokenType::Identifier;
     } else if (match("[0-9]+")) {

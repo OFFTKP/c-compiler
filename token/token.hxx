@@ -2,6 +2,7 @@
 #define TOKEN_HXX
 #include <misc/json.hpp>
 #include <common/str_hash.hxx>
+#include <cctype>
 #include <tuple>
 
 enum class TokenType {
@@ -38,6 +39,11 @@ static inline TokenType serialize(std::string e) {
         #undef DEF
         default: return TokenType::Empty;
     }
+}
+
+static inline TokenType serialize_l(std::string e) {
+    e[0] = std::toupper(e[0]);
+    return serialize(e);
 }
 
 static inline std::ostream& operator<<(std::ostream& o, const std::vector<Token>& tokens) {

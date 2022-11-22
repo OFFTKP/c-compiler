@@ -55,38 +55,38 @@ ASTNodePtr Parser::is_translation_unit() {
 }
 
 ASTNodePtr Parser::is_external_declaration() {
-    commit();
+    std::vector<ASTNodePtr> next;
     if (auto func_node = is_function_declaration()) {
-        // auto ext_node = is_external_declaration();
-        std::vector<ASTNodePtr> next;
         next.push_back(std::move(func_node));
-        return MakeNode(ASTNodeType::ExternalDeclaration, std::move(next), GET_UNUSED_NAME("external_declaration"));
-    }
-    rollback();
-    return nullptr;
+    } else if (auto decl_node = is_declaration()) {
+        next.push_back(std::move(decl_node));
+    } else return nullptr;
+    return MakeNode(ASTNodeType::ExternalDeclaration, std::move(next), GET_UNUSED_NAME("external_declaration"));
 }
 
 ASTNodePtr Parser::is_function_declaration() {
-    if (auto type_node = is_type_specifier()) {
-        if (auto id_node = is_identifier()) {
-            if (auto args_node = is_function_arguments()) {
-                if (auto block_node = is_code_block()) {
-                    auto name = id_node->Value;
-                    std::vector<ASTNodePtr> next;
-                    next.push_back(std::move(type_node));
-                    next.push_back(std::move(args_node));
-                    next.push_back(std::move(block_node));
-                    return MakeNode(ASTNodeType::FunctionDeclaration, std::move(next), std::move(name));
-                }
-            }
-        }
-        throw_error();
-    }
+    // if (auto type_node = is_type_specifier()) {
+    //     if (auto id_node = is_identifier()) {
+    //         if (auto args_node = is_function_arguments()) {
+    //             if (auto block_node = is_code_block()) {
+    //                 auto name = id_node->Value;
+    //                 std::vector<ASTNodePtr> next;
+    //                 next.push_back(std::move(type_node));
+    //                 next.push_back(std::move(args_node));
+    //                 next.push_back(std::move(block_node));
+    //                 return MakeNode(ASTNodeType::FunctionDeclaration, std::move(next), std::move(name));
+    //             }
+    //         }
+    //     }
+    //     throw_error();
+    // }
     return nullptr;
 }
 
 ASTNodePtr Parser::is_type_specifier() {
-    RETURN_IF_MATCH(TypeSpecifier,
+    std::vector<ASTNodePtr> next;
+    auto value = get_token_value();
+    if (advance_if(MATCH_ANY(
         TokenType::Void,
         TokenType::Int,
         TokenType::Char,
@@ -99,7 +99,17 @@ ASTNodePtr Parser::is_type_specifier() {
         TokenType::Complex,
         TokenType::Imaginary,
         TokenType::Bool
-    );
+    )))
+    {
+        return MakeNode(ASTNodeType::TypeSpecifier, {}, GET_UNUSED_NAME(value));
+    } else if (auto struct_node = is_struct_or_union_specifier()) {
+        next.push_back(std::move(struct_node));
+    } else if (auto enum_node = is_enum_specifier()) {
+        next.push_back(std::move(enum_node));
+    } else if (auto typedef_node = is_typedef_name()) {
+        next.push_back(std::move(typedef_node));
+    } else return nullptr;
+    return MakeNode(ASTNodeType::TypeSpecifier, std::move(next), GET_UNUSED_NAME(value));
 }
 
 ASTNodePtr Parser::is_function_specifier() {
@@ -124,11 +134,8 @@ ASTNodePtr Parser::is_function_arguments() {
     return nullptr;
 }
 
-ASTNodePtr Parser::is_punctuator(char c) {
-    bool ret = (get_token_type() == TokenType::Punctuator && get_token_value()[0] == c);
-    auto node = ret ? MakeNode(ASTNodeType::Punctuator, {}, get_token_value()) : nullptr;
-    advance_if(ret);
-    return node;
+bool Parser::is_punctuator(char c) {
+    return advance_if(get_token_type() == TokenType::Punctuator && get_token_value()[0] == c);
 }
 
 ASTNodePtr Parser::is_code_block() {
@@ -142,6 +149,93 @@ ASTNodePtr Parser::is_code_block() {
         }
         throw_error();
     }
+    return nullptr;
+}
+
+ASTNodePtr Parser::is_storage_class_specifier() {
+    RETURN_IF_MATCH(StorageClassSpecifier,
+        TokenType::Typedef,
+        TokenType::Extern,
+        TokenType::Static,
+        TokenType::Auto,
+        TokenType::Register
+    );
+}
+
+ASTNodePtr Parser::is_struct_or_union_specifier() {
+    if (auto str_node = is_struct_or_union()) {
+        std::vector<ASTNodePtr> next;
+        auto id_node = is_identifier();
+        if (is_punctuator('{')) {
+            if (auto decl_list_node = is_struct_declaration_list()) {
+                if (is_punctuator('}')) {
+                    next.push_back(std::move(str_node));
+                    if (id_node) next.push_back(std::move(id_node));
+                    next.push_back(std::move(decl_list_node));
+                    return MakeNode(ASTNodeType::StructOrUnionSpecifier, std::move(next), GET_UNUSED_NAME("struct_or_union_specifier"));
+                }
+            }
+        }
+        throw_error();
+    }
+    return nullptr;
+}
+
+ASTNodePtr Parser::is_struct_declaration_list() {
+    MAKE_LIST(struct_declaration_list, struct_declaration, StructDeclarationList);
+}
+
+ASTNodePtr Parser::is_struct_declaration() {
+    if (auto spec_qual_list_node = is_specifier_qualifier_list()) {
+        if (auto decl_list_node = is_struct_declarator_list()) {
+            if (is_punctuator(';')) {
+                std::vector<ASTNodePtr> next;
+                next.push_back(std::move(spec_qual_list_node));
+                next.push_back(std::move(decl_list_node));
+                return MakeNode(ASTNodeType::StructDeclaration, std::move(next), GET_UNUSED_NAME("struct_declaration"));
+            }
+        }
+    }
+    return nullptr;
+}
+
+ASTNodePtr Parser::is_struct_declarator_list() {
+    ASTNodePtr list_1 = MakeNode(ASTNodeType::StructDeclaratorList, {}, GET_UNUSED_NAME("struct_declaration_list"));
+    if (auto member_node = is_struct_declarator()) {
+        if (auto list_2 = is_struct_declarator_list())
+            for (auto& node : list_2->Next)
+                list_1->Next.push_back(std::move(node));
+        list_1->Next.push_back(std::move(member_node));
+        return list_1;
+    } else if (is_punctuator(',')) {
+        if (auto member_node = is_struct_declarator()) {
+            if (auto list_2 = is_struct_declarator_list())
+                for (auto& node : list_2->Next)
+                    list_1->Next.push_back(std::move(node));
+            list_1->Next.push_back(std::move(member_node));
+            return list_1;
+        }
+    }
+    return nullptr;
+}
+
+ASTNodePtr Parser::is_struct_declarator() {
+    std::vector<ASTNodePtr> next;
+    auto decl_node = is_declarator();
+    if (is_punctuator(':')) {
+        if (auto const_node = is_constant_expression()) {
+            if (decl_node)
+                next.push_back(std::move(decl_node));
+            next.push_back(std::move(const_node));
+        }
+    } else if (decl_node) {
+        next.push_back(std::move(decl_node));
+
+    } else return nullptr;
+    return MakeNode(ASTNodeType::StructDeclarator, std::move(next), GET_UNUSED_NAME("struct_declarator"));
+}
+
+ASTNodePtr Parser::is_constant_expression() {
     return nullptr;
 }
 
@@ -177,12 +271,37 @@ ASTNodePtr Parser::is_argument() {
     return nullptr;
 }
 
+ASTNodePtr Parser::is_declaration() {
+    if (auto decl_node = is_declaration_specifiers()) {
+        std::vector<ASTNodePtr> next;
+        auto init_node = is_init_declarator_list();
+        if (is_punctuator(';')) {
+            if (init_node) next.push_back(std::move(init_node));
+            next.push_back(std::move(decl_node));
+            return MakeNode(ASTNodeType::Declaration, std::move(next), GET_UNUSED_NAME("declaration"));
+        }
+    }
+    return nullptr;
+}
+
+ASTNodePtr Parser::is_declaration_specifiers() {
+    // TODO unfinished
+    std::vector<ASTNodePtr> next;
+    if (auto type_node = is_type_specifier()) {
+        auto decl_node = is_declaration_specifiers();
+        if (decl_node) next.push_back(std::move(decl_node));
+        next.push_back(std::move(type_node));
+        return MakeNode(ASTNodeType::DeclarationSpecifiers, std::move(next), GET_UNUSED_NAME("declaration_specifiers"));
+    }
+    return nullptr;
+}
+
 ASTNodePtr Parser::is_statement_list() {
     return MakeNode(ASTNodeType::StatementList, {}, GET_UNUSED_NAME("statement_list"));
 }
 
 ASTNodePtr Parser::is_statement() {
-    
+    return nullptr;
 }
 
 ASTNodePtr Parser::is_struct_or_union() {
@@ -193,26 +312,55 @@ ASTNodePtr Parser::is_type_qualifier() {
     RETURN_IF_MATCH(TypeQualifier, TokenType::Const, TokenType::Volatile, TokenType::Restrict);
 }
 
-ASTNodePtr Parser::is_declarator() {
+ASTNodePtr Parser::is_enum_specifier() {
+    return nullptr;
+}
 
+ASTNodePtr Parser::is_typedef_name() {
+    return nullptr;
+}
+
+ASTNodePtr Parser::is_init_declarator_list() {
+    return nullptr;
+}
+
+ASTNodePtr Parser::is_declarator() {
+    std::vector<ASTNodePtr> next;
+    auto p_node = is_pointer();
+    if (auto decl_node = is_direct_declarator()) {
+        if (p_node)
+            next.push_back(std::move(p_node));
+        next.push_back(std::move(decl_node));
+        return MakeNode(ASTNodeType::Declarator, std::move(next), GET_UNUSED_NAME("declarator"));
+    }
+    return nullptr;
+}
+
+ASTNodePtr Parser::is_pointer() {
+    std::vector<ASTNodePtr> next;
+    if (is_punctuator('*')) {
+        auto list_node = is_type_qualifier_list();
+        if (auto pointer_node = is_pointer()) {
+            if (list_node) next.push_back(std::move(list_node));
+            next.push_back(std::move(pointer_node));
+            return MakeNode(ASTNodeType::Pointer, std::move(next), GET_UNUSED_NAME("pointer"));
+        }
+        return MakeNode(ASTNodeType::Pointer, {}, GET_UNUSED_NAME("pointer"));
+    }
+    return nullptr;
 }
 
 ASTNodePtr Parser::is_direct_declarator() {
+    std::vector<ASTNodePtr> next;
     if (auto id = is_identifier()) {
-        
+        next.push_back(std::move(id));
+        return MakeNode(ASTNodeType::Identifier, std::move(next), GET_UNUSED_NAME("direct_declarator"));
     }
+    return nullptr;
 }
 
 ASTNodePtr Parser::is_type_qualifier_list() {
-    ASTNodePtr typeq_list_node = MakeNode(ASTNodeType::TypeQualifierList, {}, GET_UNUSED_NAME("type_qualifier_list"));
-    if (auto typeq_node = is_type_qualifier()) {
-        if (auto typeq_list_node2 = is_type_qualifier_list())
-            for (auto& node : typeq_list_node2->Next)
-                typeq_list_node->Next.push_back(std::move(node));
-        typeq_list_node->Next.push_back(std::move(typeq_node));
-        return typeq_list_node;
-    }
-    return nullptr;
+    MAKE_LIST(type_qualifier_list, type_qualifier, TypeQualifierList);
 }
 
 ASTNodePtr Parser::is_specifier_qualifier_list() {
@@ -292,11 +440,11 @@ ASTNodePtr Parser::is_cast_expression() {
 }
 
 ASTNodePtr Parser::is_type_name() {
-
+    return nullptr;
 }
 
 ASTNodePtr Parser::is_unary_expression() {
-
+    return nullptr;
 }
 
 std::string Parser::GetUML() {

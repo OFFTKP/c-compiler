@@ -40,7 +40,20 @@ private:
     ASTNodePtr is_direct_declarator();
     ASTNodePtr is_specifier_qualifier_list();
     ASTNodePtr is_identifier();
-    ASTNodePtr is_punctuator(char c);
+    ASTNodePtr is_storage_class_specifier();
+    ASTNodePtr is_struct_or_union_specifier();
+    ASTNodePtr is_struct_declaration_list();
+    ASTNodePtr is_struct_declaration();
+    ASTNodePtr is_struct_declarator_list();
+    ASTNodePtr is_struct_declarator();
+    ASTNodePtr is_constant_expression();
+    ASTNodePtr is_pointer();
+    ASTNodePtr is_enum_specifier();
+    ASTNodePtr is_typedef_name();
+    ASTNodePtr is_declaration();
+    ASTNodePtr is_declaration_specifiers();
+    ASTNodePtr is_init_declarator_list();
+    bool is_punctuator(char c);
 
     void throw_error();
 
