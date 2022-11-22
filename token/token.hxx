@@ -1,6 +1,7 @@
 #ifndef TOKEN_HXX
 #define TOKEN_HXX
 #include <misc/json.hpp>
+#include <common/str_hash.hxx>
 #include <tuple>
 
 enum class TokenType {
@@ -27,6 +28,15 @@ static inline std::string deserialize(TokenType e) {
         #include <token/tokens.def>
         #undef DEF
         default: return "";
+    }
+}
+
+static inline TokenType serialize(std::string e) {
+    switch (hash(e.c_str())) {
+        #define DEF(x, y) case (hash(#x)): return TokenType::x;
+        #include<token/tokens.def>
+        #undef DEF
+        default: return TokenType::Empty;
     }
 }
 

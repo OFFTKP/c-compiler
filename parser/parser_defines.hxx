@@ -5,5 +5,5 @@
     auto node = ret ? MakeNode(ASTNodeType::type, {}, get_token_value()) : nullptr; \
     advance_if(ret); \
     return node;
-#define GET_UNUSED_NAME(name) (std::string(name) + std::string("__") + std::to_string(++value_count_[name]))
+#define GET_UNUSED_NAME(name) (std::to_string(++value_count_[name]) + std::string("__") + std::string(name))
 #endif

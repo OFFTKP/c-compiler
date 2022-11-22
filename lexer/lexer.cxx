@@ -176,6 +176,22 @@ TokenType Lexer::get_type()
         return TokenType::Double;
     } else if (matchw("const")) {
         return TokenType::Const;
+    } else if (matchw("void")) {
+        return TokenType::Void;
+    } else if (matchw("short")) {
+        return TokenType::Short;
+    } else if (matchw("long")) {
+        return TokenType::Long;
+    } else if (matchw("float")) {
+        return TokenType::Float;
+    } else if (matchw("signed")) {
+        return TokenType::Signed;
+    } else if (matchw("unsigned")) {
+        return TokenType::Unsigned;
+    } else if (matchw("volatile")) {
+        return TokenType::Volatile;
+    } else if (matchw("restrict")) {
+        return TokenType::Restrict;
     } else if (matchw("if")) {
         return TokenType::If;
     } else if (matchw("int")) {
