@@ -60,6 +60,22 @@ target_compile_definitions(TestLexer PRIVATE TEST_DATA_FILEPATH="${RootPath}/lex
 target_link_libraries(TestLexer cppunit)
 add_test(NAME TestLexer COMMAND TestLexer)
 
+project(TestParser)
+add_executable(
+    TestParser
+    ${RootPath}/common/qa/test_runner.cxx
+    ${RootPath}/parser/qa/test_parser_grammar.cxx
+    ${RootPath}/common/qa/test_base.cxx
+    ${RootPath}/lexer/lexer.cxx
+    ${RootPath}/parser/parser.cxx
+    ${RootPath}/preprocessor/preprocessor.cxx
+    ${RootPath}/boolean_evaluator/boolean_evaluator.cxx
+)
+target_include_directories(TestParser PUBLIC ${RootPath}/)
+target_compile_definitions(TestParser PRIVATE TEST_DATA_FILEPATH="${RootPath}/parser/qa/data")
+target_link_libraries(TestParser cppunit)
+add_test(NAME TestParser COMMAND TestParser)
+
 project(TestBooleanEvaluator)
 add_executable(
     TestBooleanEvaluator 

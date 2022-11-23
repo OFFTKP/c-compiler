@@ -2,12 +2,15 @@
 #define PARSER_HXX
 #include <parser/parser_node.hxx>
 #include <parser/parser_defines.hxx>
+#include <token/token.hxx>
 #include <string>
+#include <vector>
 #include <algorithm>
 
 class Parser {
 public:
     Parser(const std::string& input);
+    Parser(const std::vector<Token>& input);
     ~Parser();
 
     void Parse();
@@ -107,5 +110,7 @@ private:
     ASTNodePtr start_node_;
     std::stringstream uml_ss_;
     std::unordered_map<std::string, int> value_count_ {};
+
+    friend class TestParserGrammar;
 };
 #endif

@@ -6,23 +6,34 @@
 
 Parser::Parser(const std::string& input)
     : input_(input)
+    , tokens_{}
     , index_(nullptr)
     , start_node_{}
 {
 }
 
+Parser::Parser(const std::vector<Token>& input)
+    : tokens_(input)
+    , input_{}
+    , index_(nullptr)
+    , start_node_{}
+{
+    index_ = tokens_.begin();
+}
+
 Parser::~Parser() {}
 
 void Parser::Parse() {
-    std::string unprocessed = input_;
-    Preprocessor preprocessor(unprocessed);
-    auto processed = preprocessor.Process();
-    Lexer lexer(processed);
-    tokens_ = lexer.Lex();
-    if (tokens_.empty())
-        throw_error();
+    if (tokens_.empty()) {
+        std::string unprocessed = input_;
+        Preprocessor preprocessor(unprocessed);
+        auto processed = preprocessor.Process();
+        Lexer lexer(processed);
+        tokens_ = lexer.Lex();
+        if (tokens_.empty())
+            throw_error();
+    }
     rollback_index_ = tokens_.begin();
-    
     rollback();
     parse_impl();
     ++index_;
@@ -112,7 +123,6 @@ ASTNodePtr Parser::is_block_item() {
 }
 
 ASTNodePtr Parser::is_type_specifier() {
-    std::vector<ASTNodePtr> next;
     auto value = get_token_value();
     if (advance_if(MATCH_ANY(
         TokenType::Void,
@@ -131,13 +141,12 @@ ASTNodePtr Parser::is_type_specifier() {
     {
         return MakeNode(ASTNodeType::TypeSpecifier, {}, GET_UNUSED_NAME(value));
     } else if (auto struct_node = is_struct_or_union_specifier()) {
-        next.push_back(std::move(struct_node));
+        return std::move(struct_node);
     } else if (auto enum_node = is_enum_specifier()) {
-        next.push_back(std::move(enum_node));
+        return std::move(enum_node);
     } else if (auto typedef_node = is_typedef_name()) {
-        next.push_back(std::move(typedef_node));
+        return std::move(typedef_node);
     } else return nullptr;
-    return MakeNode(ASTNodeType::TypeSpecifier, std::move(next), GET_UNUSED_NAME(value));
 }
 
 ASTNodePtr Parser::is_function_specifier() {

@@ -12,6 +12,7 @@ protected:
     std::string getSource(const std::string& path);
     std::vector<std::string> getLines(const std::string& source);
     std::string getDataPath();
+    std::vector<std::string> split(std::string s, std::string delimiter);
 private:
     std::vector<std::string> data_files_;
 };
