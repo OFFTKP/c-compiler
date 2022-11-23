@@ -5,15 +5,31 @@
     auto node = ret ? MakeNode(ASTNodeType::type, {}, GET_UNUSED_NAME(get_token_value())) : nullptr; \
     advance_if(ret); \
     return node;
-#define GET_UNUSED_NAME(name) (std::to_string(++value_count_[name]) + std::string("__") + std::string(name))
-
-#define MAKE_LIST(list_func, member_func, type) ASTNodePtr list_1 = MakeNode(ASTNodeType::type, {}, GET_UNUSED_NAME(#list_func)); \
-    if (auto member_node = is_##member_func()) { \
-        if (auto list_2 = is_##list_func()) \
-            for (auto& node : list_2->Next) \
-                list_1->Next.push_back(std::move(node)); \
-        list_1->Next.push_back(std::move(member_node)); \
-        return list_1; \
+#define GET_UNUSED_NAME(name) (std::to_string(++value_count_[name]) + std::string("__") + std::string(name))              
+#define MAKE_SIMPLE_LIST(list_func, member_func, type, expression) \
+    ASTNodePtr is_##list_func() { \
+        std::vector<ASTNodePtr> next; \
+        if (auto mem_node = is_##member_func()) { \
+            auto _list_node = _is_##list_func(); \
+            next.push_back(std::move(mem_node)); \
+            if (_list_node) next.push_back(std::move(_list_node)); \
+            return MakeNode(ASTNodeType::type, std::move(next), GET_UNUSED_NAME(#list_func)); \
+        } \
+        return nullptr; \
     } \
-    return nullptr
+    ASTNodePtr _is_##list_func() { \
+        std::vector<ASTNodePtr> next; \
+        if (expression) { \
+            if (auto mem_node = is_##member_func()) { \
+                next.push_back(std::move(mem_node)); \
+                if (auto list_node = _is_##list_func()) { \
+                    next.push_back(std::move(list_node)); \
+                } \
+                return MakeNode(ASTNodeType::type, std::move(next), GET_UNUSED_NAME(#list_func)); \
+            } \
+        } \
+        return nullptr; \
+    }
+
+
 #endif

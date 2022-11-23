@@ -135,11 +135,20 @@ bool Lexer::check(char c)
             }
             return false;
         }
+        case '.': {
+            char n = peek(1);
+            char n2 = peek(2);
+            if (n == '.' && n2 == '.') {
+                index_ += 2;
+                next_token_string_ = "...";
+                return false;   
+            }
+            [[fallthrough]];
+        }
         case '~':
         case '?': 
         case ':':
         case ';':
-        case '.':
         case ',':
         case '(':
         case ')':
@@ -170,6 +179,8 @@ TokenType Lexer::get_type()
     if (is_string_literal_) {
         is_string_literal_ = false;
         return TokenType::StringLiteral;
+    } else if (matchw("...")) {
+        return TokenType::Ellipsis;
     } else if (matchw(">>")) {
         return TokenType::RightOp;
     } else if (matchw("<<")) {

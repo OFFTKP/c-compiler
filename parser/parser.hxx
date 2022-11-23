@@ -1,6 +1,7 @@
 #ifndef PARSER_HXX
 #define PARSER_HXX
 #include <parser/parser_node.hxx>
+#include <parser/parser_defines.hxx>
 #include <string>
 #include <algorithm>
 
@@ -31,17 +32,15 @@ private:
     ASTNodePtr is_type_name();
     ASTNodePtr is_type_specifier();
     ASTNodePtr is_type_qualifier();
-    ASTNodePtr is_type_qualifier_list();
     ASTNodePtr is_struct_or_union();
     ASTNodePtr is_declarator();
     ASTNodePtr is_direct_declarator();
+    ASTNodePtr is_direct_declarator2();
     ASTNodePtr is_specifier_qualifier_list();
     ASTNodePtr is_identifier();
     ASTNodePtr is_storage_class_specifier();
     ASTNodePtr is_struct_or_union_specifier();
-    ASTNodePtr is_struct_declaration_list();
     ASTNodePtr is_struct_declaration();
-    ASTNodePtr is_struct_declarator_list();
     ASTNodePtr is_struct_declarator();
     ASTNodePtr is_constant_expression();
     ASTNodePtr is_pointer();
@@ -49,9 +48,7 @@ private:
     ASTNodePtr is_typedef_name();
     ASTNodePtr is_declaration();
     ASTNodePtr is_declaration_specifiers();
-    ASTNodePtr is_declaration_list();
     ASTNodePtr is_init_declarator_list();
-    ASTNodePtr is_block_item_list();
     ASTNodePtr is_block_item();
     ASTNodePtr is_labeled_statement();
     ASTNodePtr is_compound_statement();
@@ -69,13 +66,25 @@ private:
     ASTNodePtr is_and_expression();
     ASTNodePtr is_equality_expression();
     ASTNodePtr is_relational_expression();
-    ASTNodePtr is_shift_expression();
-    ASTNodePtr is_additive_expression();
-    ASTNodePtr is_multiplicative_expression();
     ASTNodePtr is_cast_expression();
     ASTNodePtr is_unary_operator();
     ASTNodePtr is_unary_expression();
     ASTNodePtr is_argument_expression_list();
+    ASTNodePtr is_parameter_type_list();
+    ASTNodePtr is_parameter_list();
+    ASTNodePtr is_parameter_declaration();
+    // Left recursive
+    MAKE_SIMPLE_LIST(type_specifier_list, type_specifier, TypeSpecifierList, true);
+    MAKE_SIMPLE_LIST(type_qualifier_list, type_qualifier, TypeQualifierList, true);
+    MAKE_SIMPLE_LIST(declaration_list, declaration, DeclarationList, true);
+    MAKE_SIMPLE_LIST(block_item_list, block_item, BlockItemList, true);
+    MAKE_SIMPLE_LIST(struct_declaration_list, struct_declaration, StructDeclarationList, true);
+    MAKE_SIMPLE_LIST(struct_declarator_list, struct_declarator, StructDeclaratorList, is_punctuator(','));
+    MAKE_SIMPLE_LIST(shift_expression, additive_expression, ShiftExpression, is_keyword(TokenType::LeftOp) || is_keyword(TokenType::RightOp));
+    MAKE_SIMPLE_LIST(additive_expression, multiplicative_expression, AdditiveExpression, is_punctuator('+') || is_punctuator('-'));
+    MAKE_SIMPLE_LIST(multiplicative_expression, cast_expression, MultiplicativeExpression, is_punctuator('*') || is_punctuator('/') || is_punctuator('%'));
+    MAKE_SIMPLE_LIST(identifier_list, identifier, IdentifierList, is_punctuator(','));
+
     bool is_punctuator(char c);
     bool is_keyword(TokenType t);
 
