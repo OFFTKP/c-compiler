@@ -2,7 +2,6 @@
 #include <common/qa/test_base.hxx>
 #include <parser/parser.hxx>
 #include <lexer/lexer.hxx>
-#include <regex>
 
 #define assertPathMacro(token_string, function, path) { \
     auto tokens = getTokens(token_string); \
@@ -38,14 +37,14 @@ void TestParserGrammar::testStructUnionDeclaration() {
     assertPathsMacro(
         "struct my_struct { int id; };",
         is_declaration,
-        "declaration/declaration_specifiers/struct_or_union_specifier/struct_declaration_list/struct_declaration",
-        "declaration/declaration_specifiers/struct_or_union_specifier/struct"
+        "Declaration/DeclarationSpecifiers/StructOrUnionSpecifier/StructDeclarationList/StructDeclaration",
+        "Declaration/DeclarationSpecifiers/StructOrUnionSpecifier/StructOrUnion"
     );
     assertPathsMacro(
         "union my_union { int id; };",
         is_declaration,
-        "declaration/declaration_specifiers/struct_or_union_specifier/struct_declaration_list/struct_declaration",
-        "declaration/declaration_specifiers/struct_or_union_specifier/union"
+        "Declaration/DeclarationSpecifiers/StructOrUnionSpecifier/StructDeclarationList/StructDeclaration",
+        "Declaration/DeclarationSpecifiers/StructOrUnionSpecifier/StructOrUnion"
     );
 }
 
@@ -53,8 +52,8 @@ void TestParserGrammar::testCastExpression() {
     assertPathsMacro(
         "(int)my_type",
         is_cast_expression,
-        "cast_expression/cast_expression/unary_expression",
-        "cast_expression/type_name"
+        "CastExpression/CastExpression/UnaryExpression",
+        "CastExpression/TypeName"
     )
 }
 
@@ -62,16 +61,16 @@ void TestParserGrammar::testSpecifierQualifierList() {
     assertPathsMacro(
         "const restrict int",
         is_specifier_qualifier_list,
-        "specifier_qualifier_list/type_qualifier",
-        "specifier_qualifier_list/specifier_qualifier_list/type_qualifier",
-        "specifier_qualifier_list/specifier_qualifier_list/specifier_qualifier_list/type_specifier",
+        "SpecifierQualifierList/TypeQualifier",
+        "SpecifierQualifierList/SpecifierQualifierList/TypeQualifier",
+        "SpecifierQualifierList/SpecifierQualifierList/SpecifierQualifierList/TypeSpecifier",
     )
     assertPathsMacro(
         "unsigned long long",
         is_specifier_qualifier_list,
-        "specifier_qualifier_list/type_specifier",
-        "specifier_qualifier_list/specifier_qualifier_list/type_specifier",
-        "specifier_qualifier_list/specifier_qualifier_list/specifier_qualifier_list/type_specifier",
+        "SpecifierQualifierList/TypeSpecifier",
+        "SpecifierQualifierList/SpecifierQualifierList/TypeSpecifier",
+        "SpecifierQualifierList/SpecifierQualifierList/SpecifierQualifierList/TypeSpecifier",
     )
 }
 
@@ -87,38 +86,33 @@ void TestParserGrammar::assertPath(const ASTNodePtr& start_node, std::string pat
     ASTNode* cur_node = start_node.get();
     for (size_t i = 0; i < directories.size(); i++) {
         const auto& dir = directories[i];
-        // TODO: get rid of GET_UNUSED_NAME
-        auto val = std::regex_replace(cur_node->Value, std::regex(R"!((\d+?)__(.+))!"), "$02");
-        std::smatch match;
-        if (std::regex_match(dir, match, std::regex(R"!((\w+?)\[(.+?)\])!"))) {
-            size_t index = std::atoi(match[2].str().c_str());
-            CPPUNIT_ASSERT_EQUAL(match[1].str(), val);
-            CPPUNIT_ASSERT_GREATER(size_t(0), index);
-            CPPUNIT_ASSERT_LESS(cur_node->Next.size(), index);
-            cur_node = cur_node->Next[index].get();
-        } else if (val == dir) {
+        auto val = deserialize(cur_node->Type);
+        if (val == dir) {
             if (i < directories.size() - 1) {
-                if (cur_node->Next.size() == 0) {
-                    CPPUNIT_ASSERT_EQUAL(size_t(1), cur_node->Next.size());
-                    cur_node = cur_node->Next[0].get();
-                } else {
-                    bool found = false;
-                    for (const auto& node : cur_node->Next) {
-                        auto val = std::regex_replace(node->Value, std::regex(R"!((\d+?)__(.+))!"), "$02");
-                        if (val == directories[i + 1]) {
-                            cur_node = node.get();
-                            found = true;
-                            break;
-                        }
+                bool found = false;
+                for (const auto& node : cur_node->Next) {
+                    auto val = deserialize(node->Type);
+                    if (val == directories[i + 1]) {
+                        cur_node = node.get();
+                        found = true;
+                        break;
                     }
-                    CPPUNIT_ASSERT_MESSAGE(std::string("Failed assertion path: ") + directories[i + 1], found);
                 }
+                if (!found) {
+                    for (const auto& node : cur_node->Next) {
+                        std::cout << deserialize(node->Type) << "\n";
+                    }
+                    std::cout << std::endl;
+                }
+                CPPUNIT_ASSERT_MESSAGE(std::string("Failed assertion path: ") + directories[i + 1], found);
             } else {
                 // Last node
                 break;
             }
         } else {
-            CPPUNIT_ASSERT_MESSAGE(std::string("Failed assertion path: ") + dir, false);
+            std::stringstream ss;
+            ss << "Expected: " << dir << "\n" << "Actual: " << val << "\n";
+            CPPUNIT_ASSERT_MESSAGE(ss.str(), false);
         }
     }
 }

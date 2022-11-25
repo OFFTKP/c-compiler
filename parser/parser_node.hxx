@@ -8,7 +8,7 @@ enum class ASTNodeType {
     #include <parser/parser_nodes.def>
     #undef DEF
 };
-static inline std::string deserialize(ASTNodeType e) {
+static inline constexpr std::string deserialize(ASTNodeType e) {
     switch (e) {
         #define DEF(x) case ASTNodeType::x: return #x;
         #include <parser/parser_nodes.def>

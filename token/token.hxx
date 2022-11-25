@@ -23,7 +23,7 @@ static inline std::ostream& operator<<(std::ostream& o, TokenType e) {
     }
 }
 
-static inline std::string deserialize(TokenType e) {
+static inline constexpr std::string deserialize(TokenType e) {
     switch (e) {
         #define DEF(x, y) case TokenType::x: return #x;
         #include <token/tokens.def>
