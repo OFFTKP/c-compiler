@@ -139,7 +139,7 @@ ASTNodePtr Parser::is_type_specifier() {
         TokenType::Bool
     )))
     {
-        return MakeNode(ASTNodeType::TypeSpecifier, {}, GET_UNUSED_NAME(value));
+        return MakeNode(ASTNodeType::TypeSpecifier, {}, GET_UNUSED_NAME("type_specifier"));
     } else if (auto struct_node = is_struct_or_union_specifier()) {
         return std::move(struct_node);
     } else if (auto enum_node = is_enum_specifier()) {
@@ -150,11 +150,11 @@ ASTNodePtr Parser::is_type_specifier() {
 }
 
 ASTNodePtr Parser::is_function_specifier() {
-    RETURN_IF_MATCH(FunctionSpecifier, TokenType::Inline);
+    RETURN_IF_MATCH(FunctionSpecifier, "function_specifier", TokenType::Inline);
 }
 
 ASTNodePtr Parser::is_identifier() {
-    RETURN_IF_MATCH(Identifier, TokenType::Identifier);
+    RETURN_IF_MATCH(Identifier, "identifier", TokenType::Identifier);
 }
 
 ASTNodePtr Parser::is_function_arguments() {
@@ -180,7 +180,7 @@ bool Parser::is_keyword(TokenType t) {
 }
 
 ASTNodePtr Parser::is_storage_class_specifier() {
-    RETURN_IF_MATCH(StorageClassSpecifier,
+    RETURN_IF_MATCH(StorageClassSpecifier, "storage_class_specifier",
         TokenType::Typedef,
         TokenType::Extern,
         TokenType::Static,
@@ -717,11 +717,11 @@ ASTNodePtr Parser::is_relational_expression() {
 }
 
 ASTNodePtr Parser::is_struct_or_union() {
-    RETURN_IF_MATCH(StructOrUnion, TokenType::Struct, TokenType::Union);
+    RETURN_IF_MATCH(StructOrUnion, get_token_value(), TokenType::Struct, TokenType::Union);
 }
 
 ASTNodePtr Parser::is_type_qualifier() {
-    RETURN_IF_MATCH(TypeQualifier, TokenType::Const, TokenType::Volatile, TokenType::Restrict);
+    RETURN_IF_MATCH(TypeQualifier, "type_qualifier", TokenType::Const, TokenType::Volatile, TokenType::Restrict);
 }
 
 ASTNodePtr Parser::is_enum_specifier() {
@@ -809,10 +809,6 @@ ASTNodePtr Parser::is_direct_declarator() {
         throw_error();
     }
     return nullptr;
-}
-
-ASTNodePtr Parser::is_direct_declarator2() {
-    
 }
 
 ASTNodePtr Parser::is_parameter_type_list() {
@@ -923,11 +919,10 @@ ASTNodePtr Parser::is_unary_operator() {
 }
 
 ASTNodePtr Parser::is_cast_expression() {
-    auto value = get_token_value();
     if (auto un_node = is_unary_expression()) {
         std::vector<ASTNodePtr> next;
         next.push_back(std::move(un_node));
-        return MakeNode(ASTNodeType::CastExpression, std::move(next), std::move(value));
+        return MakeNode(ASTNodeType::CastExpression, std::move(next), GET_UNUSED_NAME("cast_expression"));
     } else if (is_punctuator('(')) {
         if (auto type_node = is_type_name()) {
             if (is_punctuator(')')) {
@@ -935,7 +930,7 @@ ASTNodePtr Parser::is_cast_expression() {
                     std::vector<ASTNodePtr> next;
                     next.push_back(std::move(type_node));
                     next.push_back(std::move(cast_node));
-                    return MakeNode(ASTNodeType::CastExpression, std::move(next), std::move(value));
+                    return MakeNode(ASTNodeType::CastExpression, std::move(next), GET_UNUSED_NAME("cast_expression"));
                 }
             }
         }
@@ -953,6 +948,16 @@ ASTNodePtr Parser::is_unary_expression() {
 }
 
 ASTNodePtr Parser::is_type_name() {
+    if (auto spec_node = is_specifier_qualifier_list()) {
+        std::vector<ASTNodePtr> next;
+        next.push_back(std::move(spec_node));
+        if (auto abs_node = is_abstract_declarator()) next.push_back(std::move(abs_node));
+        return MakeNode(ASTNodeType::TypeName, std::move(next), GET_UNUSED_NAME("type_name"));
+    }
+    return nullptr;
+}
+
+ASTNodePtr Parser::is_abstract_declarator() {
     return nullptr;
 }
 

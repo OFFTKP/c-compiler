@@ -38,7 +38,6 @@ private:
     ASTNodePtr is_struct_or_union();
     ASTNodePtr is_declarator();
     ASTNodePtr is_direct_declarator();
-    ASTNodePtr is_direct_declarator2();
     ASTNodePtr is_specifier_qualifier_list();
     ASTNodePtr is_identifier();
     ASTNodePtr is_storage_class_specifier();
@@ -76,8 +75,8 @@ private:
     ASTNodePtr is_parameter_type_list();
     ASTNodePtr is_parameter_list();
     ASTNodePtr is_parameter_declaration();
+    ASTNodePtr is_abstract_declarator();
     // Left recursive
-    MAKE_SIMPLE_LIST(type_specifier_list, type_specifier, TypeSpecifierList, true);
     MAKE_SIMPLE_LIST(type_qualifier_list, type_qualifier, TypeQualifierList, true);
     MAKE_SIMPLE_LIST(declaration_list, declaration, DeclarationList, true);
     MAKE_SIMPLE_LIST(block_item_list, block_item, BlockItemList, true);

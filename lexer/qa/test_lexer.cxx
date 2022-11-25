@@ -23,10 +23,11 @@ std::string TestLexer::lexFile(std::string src) {
     TokenType token = TokenType::Empty;
     while (token != TokenType::Eof) {
         auto [temptoken, name] = lexer.GetNextTokenType();
-        tokens.push_back({temptoken, name});
+        if (temptoken != TokenType::Eof)
+            tokens.push_back({temptoken, name});
         token = temptoken;
     }
-    for (size_t i = 0; i < tokens.size() - 1; i++) {
+    for (size_t i = 0; i < tokens.size(); i++) {
         const auto& [type, value] = tokens[i];
         ss << value << " " << static_cast<int>(type) << "\n";
     }

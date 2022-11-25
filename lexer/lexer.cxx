@@ -48,6 +48,12 @@ Token Lexer::GetNextTokenType()
     }
     if (is_string_literal_)
         ERROR("Unfinished string literal")
+    else if (!next_token_string_.empty()) {
+        auto type = get_type();
+        std::string ret;
+        next_token_string_.swap(ret);
+        return { type, ret };
+    }
     return { TokenType::Eof, "" };
 }
 
