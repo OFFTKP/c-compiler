@@ -16,7 +16,7 @@ DEF(LEX, 1, "-l", "--lex", "Run the lexer on a file",
             tokens.push_back({temptoken, name});
             cur_token = temptoken;
         }
-        std::cout << tokens << std::endl;
+        ss() << tokens << std::endl;
     } else {
         ERROR("File not found: " << cur);
     }
@@ -30,7 +30,7 @@ DEF(PREPROCESS, 1, "-p", "--preprocess", "Run the preprocessor on a file",
         std::string src = ssrc.str();
         Preprocessor preprocessor(src);
         src = preprocessor.Process();
-        std::cout << src << std::endl;
+        ss() << src << std::endl;
     } else {
         ERROR("File not found: " << cur);
     }
@@ -44,18 +44,24 @@ DEF(PARSE, 1, "-y", "--parse", "Run the parser on a file",
         std::string src = ssrc.str();
         Parser parser(src);
         parser.Parse();
-        std::cout << parser.GetUML() << std::endl;
+        ss() << parser.GetUML() << std::endl;
     } else {
         ERROR("File not found: " << cur);
     }
 )
 DEF(VERSION, 0, "-v", "--version", "Display the version",
-    std::cout << CompilerName << " by " << CompilerAuthor << std::endl;
-    std::cout << "Version: " << CompilerVersion << std::endl;
+    ss() << CompilerName << " by " << CompilerAuthor << std::endl;
+    ss() << "Version: " << CompilerVersion << std::endl;
 )
 DEF(DUMP_DEFINES, 0, "-dd", "--dump-defines", "Dump preprocessor defines of the last processed file",
     Preprocessor::dumpDefines();
 )
 DEF(HELP, 0, "-h", "--help", "Displays this dialog",
     Global::showHelp();
+)
+DEF(OUTPUT_DIR, 1, "-od", "--output-dir", "Set the output directory",
+    Global::GetOutputPath() = args_[0];
+)
+DEF(COPY_TO_CLIPBOARD, 1, "-c", "--copy", "Copy the output to the clipboard",
+    Global::GetCopyOutputToClipboard() = true;
 )

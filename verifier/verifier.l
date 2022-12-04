@@ -62,17 +62,17 @@ void count(void);
 
 {L}({L}|{D})*		{ count(); return(check_type()); }
 
-0[xX]{H}+{IS}?		{ count(); return(Constant); }
-0[0-7]*{IS}?		{ count(); return(Constant); }
-[1-9]{D}*{IS}?		{ count(); return(Constant); }
-L?'(\\.|[^\\'\n])+'	{ count(); return(Constant); }
+0[xX]{H}+{IS}?		{ count(); return(HexadecimalConstant); }
+0[0-7]*{IS}?		{ count(); return(OctalConstant); }
+[1-9]{D}*{IS}?		{ count(); return(IntegerConstant); }
+L?'(\\.|[^\\'\n])+'	{ count(); return(CharacterConstant); }
 
-{D}+{E}{FS}?		{ count(); return(Constant); }
-{D}*"."{D}+{E}?{FS}?	{ count(); return(Constant); }
-{D}+"."{D}*{E}?{FS}?	{ count(); return(Constant); }
-0[xX]{H}+{P}{FS}?	{ count(); return(Constant); }
-0[xX]{H}*"."{H}+{P}{FS}?     { count(); return(Constant); }
-0[xX]{H}+"."{H}*{P}{FS}?     { count(); return(Constant); }
+{D}+{E}{FS}?		{ count(); return(IntegerConstant); } // Integer exponent
+{D}*"."{D}+{E}?{FS}?	{ count(); return(FloatingConstant); }
+{D}+"."{D}*{E}?{FS}?	{ count(); return(FloatingConstant); }
+0[xX]{H}+{P}{FS}?	{ count(); return(HexadecimalConstant); }
+0[xX]{H}*"."{H}+{P}{FS}?     { count(); return(HexadecimalConstant); }
+0[xX]{H}+"."{H}*{P}{FS}?     { count(); return(HexadecimalConstant); }
 
 
 L?\"(\\.|[^\\"\n])*\"	{ count(); return(StringLiteral); }

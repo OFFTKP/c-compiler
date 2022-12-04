@@ -182,6 +182,21 @@ TokenType Lexer::get_type()
 {
     #define match(str) std::regex_match(next_token_string_, std::regex(str))
     #define matchw(str) next_token_string_ == str
+    #define H  "[a-fA-F0-9]"
+    #define O  "[0-7]"
+    #define D  "[0-9]"
+    #define NZ "[1-9]"
+    #define L  "[a-zA-Z_]"
+    #define A  "[a-zA-Z_0-9]"
+    #define H  "[a-fA-F0-9]"
+    #define HP "(0[xX])"
+    #define E  "([Ee][+-]?" D "+)"
+    #define P  "([Pp][+-]?" D "+)"
+    #define FS "(f|F|l|L)"
+    #define IS "(((u|U)(l|L|ll|LL)?)|((l|L|ll|LL)(u|U)?))"
+    #define CP "(u|U|L)"
+    #define SP "(u8|u|U|L)"
+    #define ES R"!((\\(['"\?\\abfnrtv]|[0-7]{1,3}|x[a-fA-F0-9]+)))!"
     if (is_string_literal_) {
         is_string_literal_ = false;
         return TokenType::StringLiteral;
@@ -233,10 +248,17 @@ TokenType Lexer::get_type()
         return tok;
     } else if (match("[A-Za-z_][A-Za-z0-9_]*")) {
         return TokenType::Identifier;
-    } else if (match("[0-9]+")) {
-        return TokenType::Constant;
+    } else if (match(NZ D "*" IS "?")) {
+        return TokenType::IntegerConstant;
+    } else if (match(HP H "+" IS "?")) {
+        return TokenType::HexadecimalConstant;
+    } else if (match("0" O "*" IS "?")) {
+        return TokenType::OctalConstant;
+    } else if (match("L?'(\\.|[^\\'\n])+'")) {
+        return TokenType::CharacterConstant;
     }
     #undef match
+    #undef matchw
     ERROR("Unknown token:" << next_token_string_);
     return TokenType::Error;
 }

@@ -20,5 +20,10 @@ int Dispatcher::Dispatch(std::vector<Command> commands)
     for (auto& action : actions) {
         (*action)();
     }
+    if (Global::GetCopyOutputToClipboard()) {
+        Global::copyToClipboard(ss().str());
+    } else {
+        std::cout << ss().str();
+    }
     return 0;
 }

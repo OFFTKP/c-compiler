@@ -50,7 +50,8 @@ private:
     ASTNodePtr is_typedef_name();
     ASTNodePtr is_declaration();
     ASTNodePtr is_declaration_specifiers();
-    ASTNodePtr is_init_declarator_list();
+    ASTNodePtr is_init_declarator();
+    ASTNodePtr is_initializer();
     ASTNodePtr is_block_item();
     ASTNodePtr is_labeled_statement();
     ASTNodePtr is_compound_statement();
@@ -71,26 +72,36 @@ private:
     ASTNodePtr is_cast_expression();
     ASTNodePtr is_unary_operator();
     ASTNodePtr is_unary_expression();
-    ASTNodePtr is_argument_expression_list();
     ASTNodePtr is_parameter_type_list();
-    ASTNodePtr is_parameter_list();
     ASTNodePtr is_parameter_declaration();
     ASTNodePtr is_abstract_declarator();
+    ASTNodePtr is_enumerator();
+    ASTNodePtr is_designation();
+    ASTNodePtr is_designator();
+    ASTNodePtr is_enumeration_constant();
+    ASTNodePtr is_primary_expression();
+    ASTNodePtr is_constant();
+    ASTNodePtr is_string_literal();
+    ASTNodePtr is_type_qualifier_list(), _is_type_qualifier_list();
+    ASTNodePtr is_declaration_list(), _is_declaration_list();
+    ASTNodePtr is_block_item_list(), _is_block_item_list();
+    ASTNodePtr is_struct_declaration_list(), _is_struct_declaration_list();
+    ASTNodePtr is_struct_declarator_list(), _is_struct_declarator_list();
+    ASTNodePtr is_init_declarator_list(), _is_init_declarator_list();
+    ASTNodePtr is_parameter_list(), _is_parameter_list();
+    ASTNodePtr is_identifier_list(), _is_identifier_list();
+    ASTNodePtr is_shift_expression(), _is_shift_expression();
+    ASTNodePtr is_additive_expression(), _is_additive_expression();
+    ASTNodePtr is_multiplicative_expression(), _is_multiplicative_expression();
+    ASTNodePtr is_argument_expression_list(), _is_argument_expression_list();
+    ASTNodePtr is_enumerator_list(), _is_enumerator_list();
+    ASTNodePtr is_initializer_list(), _is_initializer_list();
+    ASTNodePtr is_designator_list(), _is_designator_list();
+    ASTNodePtr is_assignment_expression_list(), _is_assignment_expression_list();
     // Left recursive
-    MAKE_SIMPLE_LIST(type_qualifier_list, type_qualifier, TypeQualifierList, true);
-    MAKE_SIMPLE_LIST(declaration_list, declaration, DeclarationList, true);
-    MAKE_SIMPLE_LIST(block_item_list, block_item, BlockItemList, true);
-    MAKE_SIMPLE_LIST(struct_declaration_list, struct_declaration, StructDeclarationList, true);
-    MAKE_SIMPLE_LIST(struct_declarator_list, struct_declarator, StructDeclaratorList, is_punctuator(','));
-    MAKE_SIMPLE_LIST(shift_expression, additive_expression, ShiftExpression, is_keyword(TokenType::LeftOp) || is_keyword(TokenType::RightOp));
-    MAKE_SIMPLE_LIST(additive_expression, multiplicative_expression, AdditiveExpression, is_punctuator('+') || is_punctuator('-'));
-    MAKE_SIMPLE_LIST(multiplicative_expression, cast_expression, MultiplicativeExpression, is_punctuator('*') || is_punctuator('/') || is_punctuator('%'));
-    MAKE_SIMPLE_LIST(identifier_list, identifier, IdentifierList, is_punctuator(','));
 
     bool is_punctuator(char c);
     bool is_keyword(TokenType t);
-
-    void throw_error();
 
     inline bool check_many(TokenType type, std::initializer_list<TokenType> many) {
         return std::ranges::find(many, type) != many.end();
