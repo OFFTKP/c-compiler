@@ -1494,14 +1494,17 @@ ASTNodePtr Parser::is_abstract_declarator() {
 }
 
 std::string Parser::GetUML() {
+    uml_value_count_.clear();
     const auto& start_node = GetStartNode();
     uml_ss_.clear();
     uml_ss_ << "@startuml\n";
-    uml_ss_ << "class translation_unit as \"translation unit\"\n";
+    uml_ss_ << "class translation_unit as \"translation-unit\"\n";
     for (const auto& node : start_node->Next) {
-        auto value = std::regex_replace(node->Value, std::regex("\\d+?__"), "");
-        uml_ss_ << "class " << node->Value << " as \"" << value << "\"\n";
-        uml_ss_ << "translation_unit --> " << node->Value << '\n';
+        auto name = deserialize(node->Type);
+        if (node->GetUniqueName().empty())
+            node->SetUniqueName(get_unique_name(name));
+        uml_ss_ << "class " << node->GetUniqueName() << " as \"" << std::regex_replace(name, std::regex("_"), "-") << "\"\n";
+        uml_ss_ << "translation_unit --> " << node->GetUniqueName() << '\n';
     }
     uml_impl(start_node->Next);
     uml_ss_ << "hide members\nhide circle\n";
@@ -1512,12 +1515,27 @@ std::string Parser::GetUML() {
 void Parser::uml_impl(const std::vector<ASTNodePtr>& nodes) {
     for (const auto& node : nodes) {
         uml_impl(node->Next);
-        auto value = get_uml_name(node->Value);
-        uml_ss_ << "class " << node->Value << " as \"" << value << "\"\n";
+        auto name = deserialize(node->Type);
+        if (node->GetUniqueName().empty())
+            node->SetUniqueName(get_unique_name(name));
+        uml_ss_ << "class " << node->GetUniqueName() << " as \"" << std::regex_replace(name, std::regex("_"), "-") << "\"\n";
         for (const auto& next : node->Next) {
-            uml_ss_ << node->Value << " --> " << next->Value << '\n';
+            if (next->GetUniqueName().empty())
+                next->SetUniqueName(get_unique_name(deserialize(next->Type)));
+            uml_ss_ << node->GetUniqueName() << " --> " << next->GetUniqueName() << '\n';
         }
     }
+}
+
+std::string Parser::get_unique_name(std::string name) {
+    std::string unique_name = name;
+    if (uml_value_count_.find(name) != uml_value_count_.end()) {
+        uml_value_count_[name]++;
+        unique_name += std::to_string(uml_value_count_[name]);
+    } else {
+        uml_value_count_[name] = 0;
+    }
+    return unique_name;
 }
 
 TokenType Parser::get_token_type() {
@@ -1526,12 +1544,6 @@ TokenType Parser::get_token_type() {
 
 std::string Parser::get_token_value() {
     return std::get<1>(*index_);
-}
-
-std::string Parser::get_uml_name(const std::string& name) {
-    std::string ret;
-    ret = std::regex_replace(name, std::regex("\\d+?__"), "");
-    return ret;
 }
 
 bool Parser::advance_if(bool adv) {

@@ -109,7 +109,7 @@ private:
 
     TokenType get_token_type();
     std::string get_token_value();
-    std::string get_uml_name(const std::string& name);
+    std::string get_unique_name(std::string);
     bool advance_if(bool adv);
     void rollback();
     void commit();
@@ -119,7 +119,7 @@ private:
     std::vector<Token>::const_iterator rollback_index_;
     ASTNodePtr start_node_;
     std::stringstream uml_ss_;
-    std::unordered_map<std::string, int> value_count_ {};
+    std::unordered_map<std::string, int> uml_value_count_ {};
 
     friend class TestParserGrammar;
 };
