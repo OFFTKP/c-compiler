@@ -74,10 +74,11 @@ void TestParserGrammar::testSpecifierQualifierList() {
 }
 
 void TestParserGrammar::testSimpleFunctionDefinition() {
-    assertPathMacro(
+    assertPathsMacro(
         "int main() { return 0; }",
         is_function_definition,
-        "function_definition/declaration_specifiers/declaration_specifier/type_specifier"
+        "function_definition/declaration_specifiers",
+        "function_definition/declarator"
     );
 }
 

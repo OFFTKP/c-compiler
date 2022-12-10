@@ -242,6 +242,8 @@ TokenType Lexer::get_type()
         return TokenType::GeOp;
     } else if (matchw("<=")) {
         return TokenType::LeOp;
+    } else if (matchw("->")) {
+        return TokenType::PtrOp;
     } else if (match("[;\\{\\},:=\\(\\)\\[\\].&!~\\-\\+\\*/%<>^\\|?]")) {
         return TokenType::Punctuator;
     } else if (auto tok = serialize_l(next_token_string_); tok != TokenType::Empty) {

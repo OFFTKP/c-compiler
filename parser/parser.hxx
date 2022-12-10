@@ -18,6 +18,7 @@ public:
     std::string GetUML();
 private:
     void parse_impl();
+    void simplify(), simplify_impl(ASTNodePtr& node);
     void uml_impl(const std::vector<ASTNodePtr>& nodes);
 
     // Checking functions
@@ -37,7 +38,6 @@ private:
     ASTNodePtr is_type_qualifier();
     ASTNodePtr is_struct_or_union();
     ASTNodePtr is_declarator();
-    ASTNodePtr is_direct_declarator();
     ASTNodePtr is_specifier_qualifier_list();
     ASTNodePtr is_identifier();
     ASTNodePtr is_storage_class_specifier();
@@ -61,13 +61,6 @@ private:
     ASTNodePtr is_jump_statement();
     ASTNodePtr is_assignment_expression();
     ASTNodePtr is_conditional_expression();
-    ASTNodePtr is_logical_or_expression();
-    ASTNodePtr is_logical_and_expression();
-    ASTNodePtr is_inclusive_or_expression();
-    ASTNodePtr is_exclusive_or_expression();
-    ASTNodePtr is_and_expression();
-    ASTNodePtr is_equality_expression();
-    ASTNodePtr is_relational_expression();
     ASTNodePtr is_cast_expression();
     ASTNodePtr is_unary_operator();
     ASTNodePtr is_unary_expression();
@@ -81,6 +74,15 @@ private:
     ASTNodePtr is_primary_expression();
     ASTNodePtr is_constant();
     ASTNodePtr is_string_literal();
+    ASTNodePtr is_postfix_expression(), _is_postfix_expression();
+    ASTNodePtr is_logical_and_expression(), _is_logical_and_expression();
+    ASTNodePtr is_logical_or_expression(), _is_logical_or_expression();
+    ASTNodePtr is_or_expression(), _is_or_expression();
+    ASTNodePtr is_xor_expression(), _is_xor_expression();
+    ASTNodePtr is_and_expression(), _is_and_expression();
+    ASTNodePtr is_equality_expression(), _is_equality_expression();
+    ASTNodePtr is_relational_expression(), _is_relational_expression();
+    ASTNodePtr is_direct_declarator(), _is_direct_declarator();
     ASTNodePtr is_type_qualifier_list(), _is_type_qualifier_list();
     ASTNodePtr is_declaration_list(), _is_declaration_list();
     ASTNodePtr is_block_item_list(), _is_block_item_list();
