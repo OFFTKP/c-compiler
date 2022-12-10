@@ -32,7 +32,7 @@ static inline constexpr std::string deserialize(ASTNodeType e) {
 struct ASTNode;
 using ASTNodePtr = std::unique_ptr<ASTNode>;
 struct ASTNode {
-    ASTNode(ASTNodeType type, std::vector<ASTNodePtr> next, std::string value = "") : Type(type), Next(std::move(next)) {}
+    ASTNode(ASTNodeType type, std::vector<ASTNodePtr> next) : Type(type), Next(std::move(next)) {}
     ASTNodeType Type;
     std::vector<ASTNodePtr> Next;
     std::string GetUniqueName() { return unique_name_; };
@@ -40,5 +40,5 @@ struct ASTNode {
 private:
     std::string unique_name_;
 };
-inline constexpr auto MakeNode = std::make_unique<ASTNode, ASTNodeType, std::vector<ASTNodePtr>, std::string>;
+inline constexpr auto MakeNode = std::make_unique<ASTNode, ASTNodeType, std::vector<ASTNodePtr>>;
 #endif

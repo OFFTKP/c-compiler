@@ -18,7 +18,12 @@ int Dispatcher::Dispatch(std::vector<Command> commands)
             actions.push_back(std::move(action));
     }
     for (auto& action : actions) {
-        (*action)();
+        try {
+            (*action)();
+        } catch (std::exception& ex) {
+            std::cerr << ex.what() << std::endl;
+            return 1;
+        }
     }
     if (Global::GetCopyOutputToClipboard()) {
         Global::copyToClipboard(ss().str());

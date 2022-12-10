@@ -4,15 +4,13 @@
 #include <lexer/lexer.hxx>
 
 #define assertPathMacro(token_string, function, path) { \
-    auto tokens = getTokens(token_string); \
-    Parser parser(tokens); \
+    Parser parser(token_string); \
     auto node = parser.function(); \
     assertPath(node, path); \
 }
 
 #define assertPathsMacro(token_string, function, ...) { \
-    auto tokens = getTokens(token_string); \
-    Parser parser(tokens); \
+    Parser parser(token_string); \
     auto node = parser.function(); \
     std::vector<std::string> paths { __VA_ARGS__ }; \
     for (const auto& path : paths) \
@@ -28,9 +26,9 @@ class TestParserGrammar : public TestBase {
     CPPUNIT_TEST(testStructUnionDeclaration);
     CPPUNIT_TEST(testCastExpression);
     CPPUNIT_TEST(testSpecifierQualifierList);
+    CPPUNIT_TEST(testSimpleFunctionDefinition);
     CPPUNIT_TEST_SUITE_END();
 
-    std::vector<Token> getTokens(std::string src);
     void assertPath(const ASTNodePtr& node, std::string path);
 };
 
@@ -38,14 +36,14 @@ void TestParserGrammar::testStructUnionDeclaration() {
     assertPathsMacro(
         "struct my_struct { int id; };",
         is_declaration,
-        "Declaration/DeclarationSpecifiers/StructOrUnionSpecifier/StructDeclarationList/StructDeclaration",
-        "Declaration/DeclarationSpecifiers/StructOrUnionSpecifier/StructOrUnion"
+        "declaration/declaration_specifiers/struct_or_union_specifier/struct_declaration_list/struct_declaration",
+        "declaration/declaration_specifiers/struct_or_union_specifier/struct_or_union"
     );
     assertPathsMacro(
         "union my_union { int id; };",
         is_declaration,
-        "Declaration/DeclarationSpecifiers/StructOrUnionSpecifier/StructDeclarationList/StructDeclaration",
-        "Declaration/DeclarationSpecifiers/StructOrUnionSpecifier/StructOrUnion"
+        "declaration/declaration_specifiers/struct_or_union_specifier/struct_declaration_list/struct_declaration",
+        "declaration/declaration_specifiers/struct_or_union_specifier/struct_or_union"
     );
 }
 
@@ -53,8 +51,8 @@ void TestParserGrammar::testCastExpression() {
     assertPathsMacro(
         "(int)my_type",
         is_cast_expression,
-        "CastExpression/CastExpression/UnaryExpression",
-        "CastExpression/TypeName"
+        "cast_expression/cast_expression/unary_expression",
+        "cast_expression/type_name"
     )
 }
 
@@ -62,16 +60,16 @@ void TestParserGrammar::testSpecifierQualifierList() {
     assertPathsMacro(
         "const restrict int",
         is_specifier_qualifier_list,
-        "SpecifierQualifierList/TypeQualifier",
-        "SpecifierQualifierList/SpecifierQualifierList/TypeQualifier",
-        "SpecifierQualifierList/SpecifierQualifierList/SpecifierQualifierList/TypeSpecifier",
+        "specifier_qualifier_list/type_qualifier",
+        "specifier_qualifier_list/specifier_qualifier_list/type_qualifier",
+        "specifier_qualifier_list/specifier_qualifier_list/specifier_qualifier_list/type_specifier",
     )
     assertPathsMacro(
         "unsigned long long",
         is_specifier_qualifier_list,
-        "SpecifierQualifierList/TypeSpecifier",
-        "SpecifierQualifierList/SpecifierQualifierList/TypeSpecifier",
-        "SpecifierQualifierList/SpecifierQualifierList/SpecifierQualifierList/TypeSpecifier",
+        "specifier_qualifier_list/type_specifier",
+        "specifier_qualifier_list/specifier_qualifier_list/type_specifier",
+        "specifier_qualifier_list/specifier_qualifier_list/specifier_qualifier_list/type_specifier",
     )
 }
 
@@ -79,13 +77,8 @@ void TestParserGrammar::testSimpleFunctionDefinition() {
     assertPathMacro(
         "int main() { return 0; }",
         is_function_definition,
-        "FunctionDefinition/DeclarationSpecifiers/TypeSpecifier"
+        "function_definition/declaration_specifiers/declaration_specifier/type_specifier"
     );
-}
-
-std::vector<Token> TestParserGrammar::getTokens(std::string src) {
-    Lexer lexer(src);
-    return lexer.Lex();
 }
 
 void TestParserGrammar::assertPath(const ASTNodePtr& start_node, std::string path) {

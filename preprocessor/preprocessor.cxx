@@ -64,16 +64,6 @@ std::string Preprocessor::Process() {
     std::string ret = input_;
     current_path_ = std::filesystem::path(first_file_path_);
     process_impl(ret, first_file_path_);
-    // std::regex single_line_comment("//.*"); // TODO: fix comments inside quotes
-    // std::regex tab("[\\t]");
-    // std::regex whitespace("[\\s][\\s]+");
-    // std::regex caret_newline("\\r\\n");
-    // ret = resolve_includes(input);
-    // ret = remove_comments(input);
-    // input = std::regex_replace(input, single_line_comment, "");
-    // input = std::regex_replace(input, tab, " ");
-    // input = std::regex_replace(input, whitespace, " ");
-    // input = std::regex_replace(input, caret_newline, "\n");
     return out_stream_.str();
 }
 

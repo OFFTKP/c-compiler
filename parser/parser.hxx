@@ -6,11 +6,11 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <ranges>
 
 class Parser {
 public:
     Parser(const std::string& input);
-    Parser(const std::vector<Token>& input);
     ~Parser();
 
     void Parse();
@@ -59,7 +59,6 @@ private:
     ASTNodePtr is_selection_statement();
     ASTNodePtr is_iteration_statement();
     ASTNodePtr is_jump_statement();
-    ASTNodePtr is_expression();
     ASTNodePtr is_assignment_expression();
     ASTNodePtr is_conditional_expression();
     ASTNodePtr is_logical_or_expression();
@@ -97,11 +96,15 @@ private:
     ASTNodePtr is_enumerator_list(), _is_enumerator_list();
     ASTNodePtr is_initializer_list(), _is_initializer_list();
     ASTNodePtr is_designator_list(), _is_designator_list();
+    ASTNodePtr is_expression(), _is_expression();
     ASTNodePtr is_assignment_expression_list(), _is_assignment_expression_list();
-    // Left recursive
 
+    // consume(...) functions are the same as is_...() functions
+    // but if the token is not the expected one, it will throw an exception
     bool is_punctuator(char c);
+    void consume(char c);
     bool is_keyword(TokenType t);
+    void consume(TokenType t);
 
     inline bool check_many(TokenType type, std::initializer_list<TokenType> many) {
         return std::ranges::find(many, type) != many.end();
@@ -111,12 +114,9 @@ private:
     std::string get_token_value();
     std::string get_unique_name(std::string);
     bool advance_if(bool adv);
-    void rollback();
-    void commit();
     const std::string& input_;
     std::vector<Token> tokens_;
     std::vector<Token>::const_iterator index_;
-    std::vector<Token>::const_iterator rollback_index_;
     ASTNodePtr start_node_;
     std::stringstream uml_ss_;
     std::unordered_map<std::string, int> uml_value_count_ {};
