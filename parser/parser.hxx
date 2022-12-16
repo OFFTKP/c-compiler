@@ -116,13 +116,14 @@ private:
     std::string get_token_value();
     std::string get_unique_name(std::string);
     bool advance_if(bool adv);
+    bool type_defined(const std::string& type);
     const std::string& input_;
     std::vector<Token> tokens_;
     std::vector<Token>::const_iterator index_;
     ASTNodePtr start_node_;
     std::stringstream uml_ss_;
     std::unordered_map<std::string, int> uml_value_count_ {};
-
+    std::unordered_map<std::string, std::string> typedefs_ {};
     friend class TestParserGrammar;
 };
 #endif

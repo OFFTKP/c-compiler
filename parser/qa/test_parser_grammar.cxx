@@ -89,23 +89,17 @@ void TestParserGrammar::assertPath(const ASTNodePtr& start_node, std::string pat
     ASTNode* cur_node = start_node.get();
     for (size_t i = 0; i < directories.size(); i++) {
         const auto& dir = directories[i];
-        auto val = deserialize(cur_node->Type);
+        auto val = snake_case(deserialize(cur_node->Type));
         if (val == dir) {
             if (i < directories.size() - 1) {
                 bool found = false;
                 for (const auto& node : cur_node->Next) {
-                    auto val = deserialize(node->Type);
+                    auto val = snake_case(deserialize(node->Type));
                     if (val == directories[i + 1]) {
                         cur_node = node.get();
                         found = true;
                         break;
                     }
-                }
-                if (!found) {
-                    for (const auto& node : cur_node->Next) {
-                        std::cout << deserialize(node->Type) << "\n";
-                    }
-                    std::cout << std::endl;
                 }
                 CPPUNIT_ASSERT_MESSAGE(std::string("Failed assertion path: ") + directories[i + 1], found);
             } else {

@@ -22,11 +22,51 @@ Parser::Parser(const std::string& input)
 Parser::~Parser() {}
 
 void Parser::Parse() {
-    parse_impl();
+    try {
+        parse_impl();
+    } catch (std::exception& ex) {
+        int i = index_ - tokens_.begin();
+        int j = 0;
+        int indentation = 0;
+        bool first = false;
+        std::cout << ex.what() << std::endl;
+        std::cout << "Trying to find error:" << std::endl;
+        for (auto& [tok, value] : tokens_) {
+            if (j == i) {
+                std::cout << "\033[31m";
+            }
+            if (first) {
+                for (int k = 0; k < indentation; k++) {
+                    std::cout << "    ";
+                }
+                first = false;
+            }
+            std::cout << value;
+            switch (hash(value.c_str())) {
+                case hash("{"): {
+                    indentation++;
+                    std::cout << std::endl;
+                    first = true;
+                    break;
+                }
+                case hash(";"): {
+                    std::cout << std::endl;
+                    first = true;
+                    break;
+                }
+                default: {
+                    std::cout << " ";
+                    break;
+                }
+            }
+            if (j == i) {
+                std::cout << "\033[0m";
+            }
+            j++;
+        }
+    }
     ++index_;
     assert(index_ == tokens_.end());
-    // Convert CST (concrete syntax tree) to AST (abstract syntax tree)
-    simplify();
 }
 
 const ASTNodePtr& Parser::GetStartNode() {
@@ -430,8 +470,11 @@ ASTNodePtr Parser::_is_parameter_list() {
                 next.push_back(std::move(list_node));
                 return MkNd(ParameterList);
             }
+        } else {
+            // Unconsume the comma
+            // Because parameter_type_list will consume it
+            --index_;
         }
-        parser_error;
     }
     return MkNd(ParameterList);
 }
@@ -1405,11 +1448,15 @@ ASTNodePtr Parser::is_expression_statement() {
 ASTNodePtr Parser::is_labeled_statement() {
     std::vector<ASTNodePtr> next;
     if (auto id = is_identifier()) {
-        consume(':');
-        if (auto stat_node = is_statement()) {
-            next.push_back(std::move(id));
-            next.push_back(std::move(stat_node));
-            return MkNd(LabeledStatement);
+        if (is_punctuator(':')) {
+            if (auto stat_node = is_statement()) {
+                next.push_back(std::move(id));
+                next.push_back(std::move(stat_node));
+                return MkNd(LabeledStatement);
+            }
+        } else {
+            --index_;
+            return nullptr;
         }
         parser_error;
     } else if (is_keyword(TokenType::Case)) {
@@ -1498,12 +1545,16 @@ ASTNodePtr Parser::is_enum_specifier() {
 
 ASTNodePtr Parser::is_typedef_name() {
     return nullptr;
-    // TODO: careful, this swallows identifiers, need a list of typedef'd names before
-    // this is implemented
     std::vector<ASTNodePtr> next;
-    if (auto id_node = is_identifier()) {
-        next.push_back(std::move(id_node));
-        return MkNd(TypedefName);
+    if (get_token_type() == TokenType::Identifier) {
+        auto val = get_token_value();
+        if (type_defined(val)) {
+            advance_if(true);
+            auto id = MakeNode(ASTNodeType::Identifier, {});
+            id->Value = val;
+            next.push_back(std::move(id));
+            return MkNd(TypedefName);
+        }
     }
     return nullptr;
 }
@@ -1742,32 +1793,6 @@ void Parser::consume(TokenType t) {
     }
 }
 
-void Parser::simplify() {
-    auto& start = GetStartNode();
-    for (auto& node : start->Next) {
-        simplify_impl(node);
-    }
-}
-
-void Parser::simplify_impl(ASTNodePtr& node) {
-    if (node->Next.empty()) return;
-    for (auto& next : node->Next) {
-        simplify_impl(next);
-    }
-    if (node->Next.size() == 2) {
-        for (int i = 0; i < 2; i++) {
-            auto& next = node->Next[i];
-            if (next->Type == node->Type && next->Next.size() == 0) {
-                node->Next.erase(node->Next.begin() + i);
-                break;
-            }
-        }
-    }
-    if (node->Next.size() == 1) {
-        auto& next = node->Next[0];
-        if (next->Type == ASTNodeType::Identifier) {
-            node->Type = next->Type;
-            node->Next = std::move(next->Next);
-        }
-    }
+bool Parser::type_defined(const std::string& str) {
+    return typedefs_.find(str) != typedefs_.end();
 }
