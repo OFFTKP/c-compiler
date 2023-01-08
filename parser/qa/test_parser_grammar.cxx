@@ -23,13 +23,13 @@ class TestParserGrammar : public TestBase {
     void testCastExpression();
     void testSpecifierQualifierList();
     void testSimpleFunctionDefinition();
-    void testAssignmentExpression();
+    void testExpressions();
     CPPUNIT_TEST_SUITE(TestParserGrammar);
     CPPUNIT_TEST(testStructUnionDeclaration);
     CPPUNIT_TEST(testCastExpression);
     CPPUNIT_TEST(testSpecifierQualifierList);
     CPPUNIT_TEST(testSimpleFunctionDefinition);
-    CPPUNIT_TEST(testAssignmentExpression);
+    CPPUNIT_TEST(testExpressions);
     CPPUNIT_TEST_SUITE_END();
 
     void assertPath(const ASTNodePtr& node, std::string path);
@@ -54,7 +54,7 @@ void TestParserGrammar::testCastExpression() {
     assertPathsMacro(
         "(int)my_type",
         is_cast_expression,
-        "cast_expression/cast_expression/unary_expression",
+        "cast_expression/identifier",
         "cast_expression/type_name"
     )
 }
@@ -81,21 +81,77 @@ void TestParserGrammar::testSimpleFunctionDefinition() {
         "int main() { return 0; }",
         is_function_definition,
         "function_definition/declaration_specifiers",
-        "function_definition/declarator"
+        "function_definition/identifier",
+        "function_definition/compound_statement"
     );
 }
 
-void TestParserGrammar::testAssignmentExpression() {
+void TestParserGrammar::testExpressions() {
     assertPathsMacro(
         "done = vfprintf (stdout, format, args);",
         is_statement,
-        "statement",
+        "modify_expression",
     );
-    // assertPathsMacro(
-    //     "done = vfprintf (stdout, format, args);",
-    //     is_declaration,
-    //     "block_item_list",
-    // );
+    assertPathsMacro(
+        "a == 5",
+        is_expression,
+        "equality_expression/identifier",
+        "equality_expression/constant",
+    )
+    assertPathsMacro(
+        "a & b",
+        is_expression,
+        "and_expression/identifier",
+        "and_expression/identifier",
+    )
+    assertPathsMacro(
+        "a | b",
+        is_expression,
+        "inclusive_or_expression/identifier",
+        "inclusive_or_expression/identifier",
+    )
+    assertPathsMacro(
+        "a ^ b",
+        is_expression,
+        "exclusive_or_expression/identifier",
+        "exclusive_or_expression/identifier",
+    )
+    assertPathsMacro(
+        "a && b",
+        is_expression,
+        "logical_and_expression/identifier",
+        "logical_and_expression/identifier",
+    )
+    assertPathsMacro(
+        "a || b",
+        is_expression,
+        "logical_or_expression/identifier",
+        "logical_or_expression/identifier",
+    )
+    assertPathsMacro(
+        "a << b",
+        is_expression,
+        "shift_expression/identifier",
+        "shift_expression/identifier",
+    )
+    assertPathsMacro(
+        "a + b",
+        is_expression,
+        "additive_expression/identifier",
+        "additive_expression/identifier",
+    )
+    assertPathsMacro(
+        "a * b",
+        is_expression,
+        "multiplicative_expression/identifier",
+        "multiplicative_expression/identifier",
+    )
+    assertPathsMacro(
+        "a >= b",
+        is_expression,
+        "relational_expression/identifier",
+        "relational_expression/identifier",
+    )
 }
 
 void TestParserGrammar::assertPath(const ASTNodePtr& start_node, std::string path) {

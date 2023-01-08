@@ -96,5 +96,209 @@ struct BlockItemListNode : public ASTNode {
     }
 };
 
+struct StructDeclaratorListNode : public ASTNode {
+    StructDeclaratorListNode() : ASTNode(ASTNodeType::StructDeclaratorList, {}) {}
+    static ASTNodePtr Create(ASTNodePtr first) {
+        // Squash the list into a single node
+        auto node = std::make_unique<StructDeclaratorListNode>();
+        auto cur_node = first.get();
+        while (true) {
+            node->Next.push_back(std::move(cur_node->Next[0]));
+            if (cur_node->Next.size() == 1) {
+                break;
+            }
+            cur_node = cur_node->Next[1].get();
+        }
+        return node;
+    }
+};
+
+struct StructDeclarationListNode : public ASTNode {
+    StructDeclarationListNode() : ASTNode(ASTNodeType::StructDeclarationList, {}) {}
+    static ASTNodePtr Create(ASTNodePtr first) {
+        // Squash the list into a single node
+        auto node = std::make_unique<StructDeclarationListNode>();
+        auto cur_node = first.get();
+        while (true) {
+            node->Next.push_back(std::move(cur_node->Next[0]));
+            if (cur_node->Next.size() == 1) {
+                break;
+            }
+            cur_node = cur_node->Next[1].get();
+        }
+        return node;
+    }
+};
+
+struct EqualityExpressionNode : public ASTNode {
+    EqualityExpressionNode() : ASTNode(ASTNodeType::EqualityExpression, {}) {}
+    static ASTNodePtr Create(ASTNodePtr first) {
+        // Squash the list into a single node
+        auto node = std::make_unique<EqualityExpressionNode>();
+        auto cur_node = first.get();
+        while (true) {
+            node->Next.push_back(std::move(cur_node->Next[0]));
+            if (cur_node->Next.size() == 1) {
+                break;
+            }
+            cur_node = cur_node->Next[1].get();
+        }
+        return node;
+    }
+};
+
+struct AndExpressionNode : public ASTNode {
+    AndExpressionNode() : ASTNode(ASTNodeType::AndExpression, {}) {}
+    static ASTNodePtr Create(ASTNodePtr first) {
+        // Squash the list into a single node
+        auto node = std::make_unique<AndExpressionNode>();
+        auto cur_node = first.get();
+        while (true) {
+            node->Next.push_back(std::move(cur_node->Next[0]));
+            if (cur_node->Next.size() == 1) {
+                break;
+            }
+            cur_node = cur_node->Next[1].get();
+        }
+        return node;
+    }
+};
+
+struct XorExpressionNode : public ASTNode {
+    XorExpressionNode() : ASTNode(ASTNodeType::ExclusiveOrExpression, {}) {}
+    static ASTNodePtr Create(ASTNodePtr first) {
+        // Squash the list into a single node
+        auto node = std::make_unique<XorExpressionNode>();
+        auto cur_node = first.get();
+        while (true) {
+            node->Next.push_back(std::move(cur_node->Next[0]));
+            if (cur_node->Next.size() == 1) {
+                break;
+            }
+            cur_node = cur_node->Next[1].get();
+        }
+        return node;
+    }
+};
+
+struct OrExpressionNode : public ASTNode {
+    OrExpressionNode() : ASTNode(ASTNodeType::InclusiveOrExpression, {}) {}
+    static ASTNodePtr Create(ASTNodePtr first) {
+        // Squash the list into a single node
+        auto node = std::make_unique<OrExpressionNode>();
+        auto cur_node = first.get();
+        while (true) {
+            node->Next.push_back(std::move(cur_node->Next[0]));
+            if (cur_node->Next.size() == 1) {
+                break;
+            }
+            cur_node = cur_node->Next[1].get();
+        }
+        return node;
+    }
+};
+
+struct LogicalOrExpressionNode : public ASTNode {
+    LogicalOrExpressionNode() : ASTNode(ASTNodeType::LogicalOrExpression, {}) {}
+    static ASTNodePtr Create(ASTNodePtr first) {
+        // Squash the list into a single node
+        auto node = std::make_unique<LogicalOrExpressionNode>();
+        auto cur_node = first.get();
+        while (true) {
+            node->Next.push_back(std::move(cur_node->Next[0]));
+            if (cur_node->Next.size() == 1) {
+                break;
+            }
+            cur_node = cur_node->Next[1].get();
+        }
+        return node;
+    }
+};
+
+struct LogicalAndExpressionNode : public ASTNode {
+    LogicalAndExpressionNode() : ASTNode(ASTNodeType::LogicalAndExpression, {}) {}
+    static ASTNodePtr Create(ASTNodePtr first) {
+        // Squash the list into a single node
+        auto node = std::make_unique<LogicalAndExpressionNode>();
+        auto cur_node = first.get();
+        while (true) {
+            node->Next.push_back(std::move(cur_node->Next[0]));
+            if (cur_node->Next.size() == 1) {
+                break;
+            }
+            cur_node = cur_node->Next[1].get();
+        }
+        return node;
+    }
+};
+
+struct RelationalExpressionNode : public ASTNode {
+    RelationalExpressionNode() : ASTNode(ASTNodeType::RelationalExpression, {}) {}
+    static ASTNodePtr Create(ASTNodePtr first) {
+        // Squash the list into a single node
+        auto node = std::make_unique<RelationalExpressionNode>();
+        auto cur_node = first.get();
+        while (true) {
+            node->Next.push_back(std::move(cur_node->Next[0]));
+            if (cur_node->Next.size() == 1) {
+                break;
+            }
+            cur_node = cur_node->Next[1].get();
+        }
+        return node;
+    }
+};
+
+struct ShiftExpressionNode : public ASTNode {
+    ShiftExpressionNode() : ASTNode(ASTNodeType::ShiftExpression, {}) {}
+    static ASTNodePtr Create(ASTNodePtr first) {
+        // Squash the list into a single node
+        auto node = std::make_unique<ShiftExpressionNode>();
+        auto cur_node = first.get();
+        while (true) {
+            node->Next.push_back(std::move(cur_node->Next[0]));
+            if (cur_node->Next.size() == 1) {
+                break;
+            }
+            cur_node = cur_node->Next[1].get();
+        }
+        return node;
+    }
+};
+
+struct AdditiveExpressionNode : public ASTNode {
+    AdditiveExpressionNode() : ASTNode(ASTNodeType::AdditiveExpression, {}) {}
+    static ASTNodePtr Create(ASTNodePtr first) {
+        // Squash the list into a single node
+        auto node = std::make_unique<AdditiveExpressionNode>();
+        auto cur_node = first.get();
+        while (true) {
+            node->Next.push_back(std::move(cur_node->Next[0]));
+            if (cur_node->Next.size() == 1) {
+                break;
+            }
+            cur_node = cur_node->Next[1].get();
+        }
+        return node;
+    }
+};
+
+struct MultiplicativeExpressionNode : public ASTNode {
+    MultiplicativeExpressionNode() : ASTNode(ASTNodeType::MultiplicativeExpression, {}) {}
+    static ASTNodePtr Create(ASTNodePtr first) {
+        // Squash the list into a single node
+        auto node = std::make_unique<MultiplicativeExpressionNode>();
+        auto cur_node = first.get();
+        while (true) {
+            node->Next.push_back(std::move(cur_node->Next[0]));
+            if (cur_node->Next.size() == 1) {
+                break;
+            }
+            cur_node = cur_node->Next[1].get();
+        }
+        return node;
+    }
+};
+
 inline constexpr auto MakeNode = std::make_unique<ASTNode, ASTNodeType, std::vector<ASTNodePtr>>;
 #endif
