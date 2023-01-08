@@ -1,7 +1,7 @@
 #include <preprocessor/preprocessor.hxx>
 #include <common/qa/test_base.hxx>
 #include <common/qa/defines.hxx>
-#include <common/state.hxx>
+#include <common/global.hxx>
 #include <filesystem>
 
 class TestPreprocessor : public TestBase {

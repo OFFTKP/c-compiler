@@ -2,6 +2,7 @@
 #include <common/qa/test_base.hxx>
 #include <parser/parser.hxx>
 #include <lexer/lexer.hxx>
+#include <common/global.hxx>
 
 #define assertPathMacro(token_string, function, path) { \
     Parser parser(token_string); \
@@ -22,11 +23,13 @@ class TestParserGrammar : public TestBase {
     void testCastExpression();
     void testSpecifierQualifierList();
     void testSimpleFunctionDefinition();
+    void testAssignmentExpression();
     CPPUNIT_TEST_SUITE(TestParserGrammar);
     CPPUNIT_TEST(testStructUnionDeclaration);
     CPPUNIT_TEST(testCastExpression);
     CPPUNIT_TEST(testSpecifierQualifierList);
     CPPUNIT_TEST(testSimpleFunctionDefinition);
+    CPPUNIT_TEST(testAssignmentExpression);
     CPPUNIT_TEST_SUITE_END();
 
     void assertPath(const ASTNodePtr& node, std::string path);
@@ -80,6 +83,19 @@ void TestParserGrammar::testSimpleFunctionDefinition() {
         "function_definition/declaration_specifiers",
         "function_definition/declarator"
     );
+}
+
+void TestParserGrammar::testAssignmentExpression() {
+    assertPathsMacro(
+        "done = vfprintf (stdout, format, args);",
+        is_statement,
+        "statement",
+    );
+    // assertPathsMacro(
+    //     "done = vfprintf (stdout, format, args);",
+    //     is_declaration,
+    //     "block_item_list",
+    // );
 }
 
 void TestParserGrammar::assertPath(const ASTNodePtr& start_node, std::string path) {

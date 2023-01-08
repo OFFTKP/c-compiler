@@ -2,7 +2,7 @@
 #include <cppunit/extensions/TestFactoryRegistry.h>
 #include <cppunit/ui/text/TestRunner.h>
 #include <iostream>
-#include <common/state.hxx>
+#include <common/global.hxx>
 
 int main() {
     CppUnit::Test *suite = CppUnit::TestFactoryRegistry::getRegistry().makeTest();

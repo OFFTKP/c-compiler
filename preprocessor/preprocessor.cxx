@@ -1,7 +1,7 @@
 #include <preprocessor/preprocessor.hxx>
 #include <boolean_evaluator/boolean_evaluator.hxx>
 #include <common/log.hxx>
-#include <common/state.hxx>
+#include <common/global.hxx>
 #include <regex>
 #include <iostream>
 #include <iomanip>

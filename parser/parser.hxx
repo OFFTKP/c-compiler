@@ -16,8 +16,10 @@ public:
     void Parse();
     const ASTNodePtr& GetStartNode();
     std::string GetUML();
-private:
+public:
+    static void parser_error();
     void parse_impl();
+    void find_error();
     void simplify(), simplify_impl(ASTNodePtr& node);
     void uml_impl(const std::vector<ASTNodePtr>& nodes);
 
@@ -125,5 +127,6 @@ private:
     std::unordered_map<std::string, int> uml_value_count_ {};
     std::unordered_map<std::string, std::string> typedefs_ {};
     friend class TestParserGrammar;
+    friend class Dispatcher;
 };
 #endif

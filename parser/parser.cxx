@@ -3,6 +3,7 @@
 #include <preprocessor/preprocessor.hxx>
 #include <common/log.hxx>
 #include <regex>
+#include <boost/stacktrace.hpp>
 
 Parser::Parser(const std::string& input)
     : input_(input)
@@ -25,61 +26,69 @@ void Parser::Parse() {
     try {
         parse_impl();
     } catch (std::exception& ex) {
-        int i = index_ - tokens_.begin();
-        int j = 0;
-        int indentation = 0;
-        bool first = false;
-        std::cout << ex.what() << std::endl;
-        std::cout << "Trying to find error:" << std::endl;
-        for (auto& [tok, value] : tokens_) {
-            if (j == i) {
-                std::cout << "\033[31m";
-            }
-            if (first) {
-                for (int k = 0; k < indentation; k++) {
-                    std::cout << "    ";
-                }
-                first = false;
-            }
-            std::cout << value;
-            switch (hash(value.c_str())) {
-                case hash("{"): {
-                    indentation++;
-                    std::cout << std::endl;
-                    first = true;
-                    break;
-                }
-                case hash(";"): {
-                    std::cout << std::endl;
-                    first = true;
-                    break;
-                }
-                default: {
-                    std::cout << " ";
-                    break;
-                }
-            }
-            if (j == i) {
-                std::cout << "\033[0m";
-            }
-            j++;
-        }
+        find_error();
     }
     ++index_;
     assert(index_ == tokens_.end());
 }
 
+void Parser::find_error() {
+    int i = index_ - tokens_.begin();
+    int j = 0;
+    int indentation = 0;
+    bool first = false;
+    std::cout << "Trying to find error:" << std::endl;
+    for (auto& [tok, value] : tokens_) {
+        if (j == i) {
+            std::cout << "\033[31m";
+        }
+        if (first) {
+            for (int k = 0; k < indentation; k++) {
+                std::cout << "    ";
+            }
+            first = false;
+        }
+        std::cout << value;
+        switch (hash(value.c_str())) {
+            case hash("{"): {
+                indentation++;
+                std::cout << std::endl;
+                first = true;
+                break;
+            }
+            case hash(";"): {
+                std::cout << std::endl;
+                first = true;
+                break;
+            }
+            default: {
+                std::cout << " ";
+                break;
+            }
+        }
+        if (j == i) {
+            std::cout << "\033[0m";
+        }
+        j++;
+    }
+}
+
+void Parser::parser_error() {
+    std::cout << boost::stacktrace::stacktrace() << std::endl;
+    throw std::runtime_error("Parser error");
+}
+
 const ASTNodePtr& Parser::GetStartNode() {
     if (index_ != tokens_.end()) {
         ERROR("Parse failed before GetStartNode");
-        parser_error;
+        parser_error();
     }
     return start_node_;
 }
 
 void Parser::parse_impl() {
     if (!(start_node_ = is_translation_unit()))
-        parser_error;
+        parser_error();
 }
 
 ASTNodePtr Parser::is_translation_unit() {
@@ -137,7 +146,7 @@ ASTNodePtr Parser::is_function_definition() {
                 return MkNd(FunctionDefinition);
             }
         }
-        parser_error;
+        parser_error();
     }
     return nullptr;
 }
@@ -204,7 +213,7 @@ ASTNodePtr Parser::is_function_arguments() {
                 return MkNd(FunctionArguments);
             }
         }
-        parser_error;
+        parser_error();
     }
     return nullptr;
 }
@@ -245,7 +254,7 @@ ASTNodePtr Parser::is_struct_or_union_specifier() {
             next.push_back(std::move(id_node));
             return MkNd(StructOrUnionSpecifier);
         }
-        parser_error;
+        parser_error();
     }
     return nullptr;
 }
@@ -259,7 +268,7 @@ ASTNodePtr Parser::is_struct_declaration() {
             next.push_back(std::move(decl_list_node));
             return MkNd(StructDeclaration);
         }
-        parser_error;
+        parser_error();
     }
     return nullptr;
 }
@@ -296,7 +305,7 @@ ASTNodePtr Parser::is_type_qualifier_list() {
             next.push_back(std::move(list_node));
             return MkNd(TypeQualifierList);
         }
-        parser_error;
+        parser_error();
     }
     return nullptr;
 }
@@ -309,7 +318,7 @@ ASTNodePtr Parser::_is_type_qualifier_list() {
             next.push_back(std::move(list_node));
             return MkNd(TypeQualifierList);
         }
-        parser_error;
+        parser_error();
     }
     return MkNd(TypeQualifierList);
 }
@@ -322,7 +331,7 @@ ASTNodePtr Parser::is_declaration_list() {
             next.push_back(std::move(list_node));
             return MkNd(DeclarationList);
         }
-        parser_error;
+        parser_error();
     }
     return nullptr;
 }
@@ -335,7 +344,7 @@ ASTNodePtr Parser::_is_declaration_list() {
             next.push_back(std::move(list_node));
             return MkNd(DeclarationList);
         }
-        parser_error;
+        parser_error();
     }
     return MkNd(DeclarationList);
 }
@@ -348,7 +357,7 @@ ASTNodePtr Parser::is_block_item_list() {
             next.push_back(std::move(list_node));
             return MkNd(BlockItemList);
         }
-        parser_error;
+        parser_error();
     }
     return nullptr;
 }
@@ -361,7 +370,7 @@ ASTNodePtr Parser::_is_block_item_list() {
             next.push_back(std::move(list_node));
             return MkNd(BlockItemList);
         }
-        parser_error;
+        parser_error();
     }
     return MkNd(BlockItemList);
 }
@@ -374,7 +383,7 @@ ASTNodePtr Parser::is_struct_declaration_list() {
             next.push_back(std::move(list_node));
             return MkNd(StructDeclarationList);
         }
-        parser_error;
+        parser_error();
     }
     return nullptr;
 }
@@ -387,7 +396,7 @@ ASTNodePtr Parser::_is_struct_declaration_list() {
             next.push_back(std::move(list_node));
             return MkNd(StructDeclarationList);
         }
-        parser_error;
+        parser_error();
     }
     return MkNd(StructDeclarationList);
 }
@@ -400,7 +409,7 @@ ASTNodePtr Parser::is_struct_declarator_list() {
             next.push_back(std::move(list_node));
             return MkNd(StructDeclaratorList);
         }
-        parser_error;
+        parser_error();
     }
     return nullptr;
 }
@@ -415,7 +424,7 @@ ASTNodePtr Parser::_is_struct_declarator_list() {
                 return MkNd(StructDeclaratorList);
             }
         }
-        parser_error;
+        parser_error();
     }
     return MkNd(StructDeclaratorList);
 }
@@ -428,7 +437,7 @@ ASTNodePtr Parser::is_init_declarator_list() {
             next.push_back(std::move(list_node));
             return MkNd(InitDeclaratorList);
         }
-        parser_error;
+        parser_error();
     }
     return nullptr;
 }
@@ -443,7 +452,7 @@ ASTNodePtr Parser::_is_init_declarator_list() {
                 return MkNd(InitDeclaratorList);
             }
         }
-        parser_error;
+        parser_error();
     }
     return MkNd(InitDeclaratorList);
 }
@@ -456,7 +465,7 @@ ASTNodePtr Parser::is_parameter_list() {
             next.push_back(std::move(list_node));
             return MkNd(ParameterList);
         }
-        parser_error;
+        parser_error();
     }
     return nullptr;
 }
@@ -481,12 +490,13 @@ ASTNodePtr Parser::_is_parameter_list() {
 
 ASTNodePtr Parser::is_identifier_list() {
     std::vector<ASTNodePtr> next;
-    if (is_identifier()) {
+    if (auto id = is_identifier()) {
         if (auto list_node = _is_identifier_list()) {
+            next.push_back(std::move(id));
             next.push_back(std::move(list_node));
             return MkNd(IdentifierList);
         }
-        parser_error;
+        parser_error();
     }
     return nullptr;
 }
@@ -494,13 +504,14 @@ ASTNodePtr Parser::is_identifier_list() {
 ASTNodePtr Parser::_is_identifier_list() {
     std::vector<ASTNodePtr> next;
     if (is_punctuator(',')) {
-        if (is_identifier()) {
+        if (auto id = is_identifier()) {
             if (auto list_node = _is_identifier_list()) {
+                next.push_back(std::move(id));
                 next.push_back(std::move(list_node));
                 return MkNd(IdentifierList);
             }
         }
-        parser_error;
+        parser_error();
     }
     return MkNd(IdentifierList);
 }
@@ -513,7 +524,7 @@ ASTNodePtr Parser::is_shift_expression() {
             next.push_back(std::move(expr_node2));
             return MkNd(ShiftExpression);
         }
-        parser_error;
+        parser_error();
     }
     return nullptr;
 }
@@ -528,7 +539,7 @@ ASTNodePtr Parser::_is_shift_expression() {
                 return MkNd(ShiftExpression);
             }
         }
-        parser_error;
+        parser_error();
     }
     return MkNd(ShiftExpression);
 }
@@ -541,7 +552,7 @@ ASTNodePtr Parser::is_additive_expression() {
             next.push_back(std::move(expr_node2));
             return MkNd(AdditiveExpression);
         }
-        parser_error;
+        parser_error();
     }
     return nullptr;
 }
@@ -556,7 +567,7 @@ ASTNodePtr Parser::_is_additive_expression() {
                 return MkNd(AdditiveExpression);
             }
         }
-        parser_error;
+        parser_error();
     }
     return MkNd(AdditiveExpression);
 }
@@ -569,7 +580,7 @@ ASTNodePtr Parser::is_multiplicative_expression() {
             next.push_back(std::move(expr_node2));
             return MkNd(MultiplicativeExpression);
         }
-        parser_error;
+        parser_error();
     }
     return nullptr;
 }
@@ -584,7 +595,7 @@ ASTNodePtr Parser::_is_multiplicative_expression() {
                 return MkNd(MultiplicativeExpression);
             }
         }
-        parser_error;
+        parser_error();
     }
     return MkNd(MultiplicativeExpression);
 }
@@ -597,7 +608,7 @@ ASTNodePtr Parser::is_argument_expression_list() {
             next.push_back(std::move(list_node));
             return MkNd(ArgumentExpressionList);
         }
-        parser_error;
+        parser_error();
     }
     return nullptr;
 }
@@ -612,7 +623,7 @@ ASTNodePtr Parser::_is_argument_expression_list() {
                 return MkNd(ArgumentExpressionList);
             }
         }
-        parser_error;
+        parser_error();
     }
     return MkNd(ArgumentExpressionList);
 }
@@ -625,7 +636,7 @@ ASTNodePtr Parser::is_enumerator_list(){
             next.push_back(std::move(list_node));
             return MkNd(EnumeratorList);
         }
-        parser_error;
+        parser_error();
     }
     return nullptr;
 }
@@ -640,7 +651,7 @@ ASTNodePtr Parser::_is_enumerator_list(){
                 return MkNd(EnumeratorList);
             }
         }
-        parser_error;
+        parser_error();
     }
     return MkNd(EnumeratorList);
 }
@@ -655,14 +666,14 @@ ASTNodePtr Parser::is_initializer_list() {
                 return MkNd(InitializerList);
             }
         }
-        parser_error;
+        parser_error();
     } else if (auto init_node = is_initializer()) {
         if (auto list_node = _is_initializer_list()) {
             next.push_back(std::move(init_node));
             next.push_back(std::move(list_node));
             return MkNd(InitializerList);
         }
-        parser_error;
+        parser_error();
     }
     return nullptr;
 }
@@ -685,7 +696,7 @@ ASTNodePtr Parser::_is_initializer_list() {
                 return MkNd(InitializerList);
             }
         }
-        parser_error;
+        parser_error();
     }
     return MkNd(InitializerList);
 }
@@ -698,7 +709,7 @@ ASTNodePtr Parser::is_designator_list() {
             next.push_back(std::move(list_node));
             return MkNd(DesignatorList);
         }
-        parser_error;
+        parser_error();
     }
     return nullptr;
 }
@@ -711,7 +722,7 @@ ASTNodePtr Parser::_is_designator_list() {
             next.push_back(std::move(list_node));
             return MkNd(DesignatorList);
         }
-        parser_error;
+        parser_error();
     }
     return MkNd(DesignatorList);
 }
@@ -724,7 +735,7 @@ ASTNodePtr Parser::is_expression() {
             next.push_back(std::move(list_node));
             return MkNd(Expression);
         }
-        parser_error;
+        parser_error();
     }
     return nullptr;
 }
@@ -739,7 +750,7 @@ ASTNodePtr Parser::_is_expression() {
                 return MkNd(Expression);
             }
         }
-        parser_error;
+        parser_error();
     }
     return MkNd(Expression);
 }
@@ -761,7 +772,7 @@ ASTNodePtr Parser::is_direct_declarator() {
                 return MkNd(DirectDeclarator);
             }
         }
-        parser_error;
+        parser_error();
     }
     return nullptr;
 }
@@ -793,7 +804,7 @@ ASTNodePtr Parser::_is_direct_declarator() {
                     return MkNd(DirectDeclarator);
                 }
             }
-            parser_error;
+            parser_error();
         }
     } else if (is_punctuator('(')) {
         if (auto param_node = is_parameter_type_list()) {
@@ -839,7 +850,7 @@ ASTNodePtr Parser::_is_relational_expression() {
                 return MkNd(RelationalExpression);
             }
         }
-        parser_error;
+        parser_error();
     }
     return MkNd(RelationalExpression);
 }
@@ -866,7 +877,7 @@ ASTNodePtr Parser::_is_equality_expression() {
                 return MkNd(EqualityExpression);
             }
         }
-        parser_error;
+        parser_error();
     }
     return MkNd(EqualityExpression);
 }
@@ -893,7 +904,7 @@ ASTNodePtr Parser::_is_and_expression() {
                 return MkNd(AndExpression);
             }
         }
-        parser_error;
+        parser_error();
     }
     return MkNd(AndExpression);
 }
@@ -920,7 +931,7 @@ ASTNodePtr Parser::_is_xor_expression() {
                 return MkNd(ExclusiveOrExpression);
             }
         }
-        parser_error;
+        parser_error();
     }
     return MkNd(ExclusiveOrExpression);
 }
@@ -947,7 +958,7 @@ ASTNodePtr Parser::_is_or_expression() {
                 return MkNd(InclusiveOrExpression);
             }
         }
-        parser_error;
+        parser_error();
     }
     return MkNd(InclusiveOrExpression);
 }
@@ -974,7 +985,7 @@ ASTNodePtr Parser::_is_logical_and_expression() {
                 return MkNd(LogicalAndExpression);
             }
         }
-        parser_error;
+        parser_error();
     }
     return MkNd(LogicalAndExpression);
 }
@@ -1001,7 +1012,7 @@ ASTNodePtr Parser::_is_logical_or_expression() {
                 return MkNd(LogicalOrExpression);
             }
         }
-        parser_error;
+        parser_error();
     }
     return MkNd(LogicalOrExpression);
 }
@@ -1011,7 +1022,7 @@ ASTNodePtr Parser::is_postfix_expression() {
     if (auto pr_node = is_primary_expression()) {
         if (auto pr_node2 = _is_postfix_expression()) {
             next.push_back(std::move(pr_node));
-            next.push_back(std::move(pr_node2));
+            if (!pr_node2->IsEmpty()) next.push_back(std::move(pr_node2));
             return MkNd(PostfixExpression);
         }
     } else if (is_punctuator('(')) {
@@ -1024,7 +1035,7 @@ ASTNodePtr Parser::is_postfix_expression() {
                 next.push_back(std::move(type_node));
                 next.push_back(std::move(init_node));
                 if (auto pr_node2 = _is_postfix_expression()) {
-                    next.push_back(std::move(pr_node2));
+                    if (!pr_node2->IsEmpty()) next.push_back(std::move(pr_node2));
                     return MkNd(PostfixExpression);
                 }
             }
@@ -1040,34 +1051,34 @@ ASTNodePtr Parser::_is_postfix_expression() {
             consume(']');
             if (auto pr_node2 = _is_postfix_expression()) {
                 next.push_back(std::move(expr_node));
-                next.push_back(std::move(pr_node2));
+                if (!pr_node2->IsEmpty()) next.push_back(std::move(pr_node2));
                 return MkNd(PostfixExpression);
             }
         }
-        parser_error;
+        parser_error();
     } else if (is_punctuator('(')) {
         auto arg_list_node = is_argument_expression_list();
         consume(')');
         if (auto pr_node2 = _is_postfix_expression()) {
             next.push_back(std::move(arg_list_node));
-            next.push_back(std::move(pr_node2));
+            if (!pr_node2->IsEmpty()) next.push_back(std::move(pr_node2));
             return MkNd(PostfixExpression);
         }
     } else if (is_punctuator('.') || is_keyword(TokenType::PtrOp)) {
         if (auto id_node = is_identifier()) {
             if (auto pr_node2 = _is_postfix_expression()) {
                 next.push_back(std::move(id_node));
-                next.push_back(std::move(pr_node2));
+                if (!pr_node2->IsEmpty()) next.push_back(std::move(pr_node2));
                 return MkNd(PostfixExpression);
             }
         }
-        parser_error;
+        parser_error();
     } else if (is_keyword(TokenType::IncOp) || is_keyword(TokenType::DecOp)) {
         if (auto pr_node2 = _is_postfix_expression()) {
-            next.push_back(std::move(pr_node2));
+            if (!pr_node2->IsEmpty()) next.push_back(std::move(pr_node2));
             return MkNd(PostfixExpression);
         }
-        parser_error;
+        parser_error();
     }    
     return MkNd(PostfixExpression);
 }
@@ -1080,13 +1091,13 @@ ASTNodePtr Parser::is_designator() {
             next.push_back(std::move(expr_node));
             return MkNd(Designator);
         }
-        parser_error;
+        parser_error();
     } else if (is_punctuator('.')) {
         if (auto id_node = is_identifier()) {
             next.push_back(std::move(id_node));
             return MkNd(Designator);
         }
-        parser_error;
+        parser_error();
     }
     return nullptr;
 }
@@ -1130,14 +1141,14 @@ ASTNodePtr Parser::is_unary_expression() {
             next.push_back(std::move(un_node));
             return MkNd(UnaryExpression);
         }
-        parser_error;
+        parser_error();
     } else if (auto un_node = is_unary_operator()) {
         if (auto cast_node = is_cast_expression()) {
             next.push_back(std::move(un_node));
             next.push_back(std::move(cast_node));
             return MkNd(UnaryExpression);
         }
-        parser_error;
+        parser_error();
     } else if (is_keyword(TokenType::Sizeof)) {
         if (auto unex_node = is_unary_expression()) {
             next.push_back(std::move(unex_node));
@@ -1167,7 +1178,7 @@ ASTNodePtr Parser::is_enumerator() {
             next.push_back(std::move(enum_node));
             return MkNd(Enumerator);
         }
-        parser_error;
+        parser_error();
     }
     return nullptr;
 }
@@ -1193,7 +1204,7 @@ ASTNodePtr Parser::is_argument_list() {
                 }
                 return args_node;
             } else {
-                parser_error;
+                parser_error();
             }
         } else {
             return args_node;
@@ -1242,7 +1253,7 @@ ASTNodePtr Parser::is_primary_expression() {
             next.push_back(std::move(expr_node));
             return MkNd(PrimaryExpression);
         }
-        parser_error;
+        parser_error();
     }
     return nullptr;
 }
@@ -1332,7 +1343,7 @@ ASTNodePtr Parser::is_selection_statement() {
                 }
             }
         }
-        parser_error;
+        parser_error();
     } else if (is_keyword(TokenType::Switch)) {
         consume('(');
         if (auto expr_node = is_expression()) {
@@ -1343,7 +1354,7 @@ ASTNodePtr Parser::is_selection_statement() {
                 return MkNd(SelectionStatement);
             }
         }
-        parser_error;
+        parser_error();
     }
     return nullptr;
 }
@@ -1360,7 +1371,7 @@ ASTNodePtr Parser::is_iteration_statement() {
                 return MkNd(IterationStatement);
             }
         }
-        parser_error;
+        parser_error();
     } else if (is_keyword(TokenType::Do)) {
         if (auto stat_node = is_statement()) {
             consume(TokenType::While);
@@ -1373,7 +1384,7 @@ ASTNodePtr Parser::is_iteration_statement() {
                 return MkNd(IterationStatement);
             }
         }
-        parser_error;
+        parser_error();
     } else if (is_keyword(TokenType::For)) {
         consume('(');
         if (auto expr_node = is_expression()) {
@@ -1402,7 +1413,7 @@ ASTNodePtr Parser::is_iteration_statement() {
                 return MkNd(IterationStatement);
             }
         }
-        parser_error;
+        parser_error();
     }
     return nullptr;
 }
@@ -1416,7 +1427,7 @@ ASTNodePtr Parser::is_jump_statement() {
             next.push_back(std::move(id));
             return MkNd(JumpStatement);
         }
-        parser_error;
+        parser_error();
     } else if (is_keyword(TokenType::Continue)) {
         consume(';');
         next.push_back(std::move(MakeNode(ASTNodeType::Continue, {})));
@@ -1437,7 +1448,10 @@ ASTNodePtr Parser::is_jump_statement() {
 
 ASTNodePtr Parser::is_expression_statement() {
     auto expr_node = is_expression();
-    if (is_punctuator(';')) {
+    if (expr_node) {
+        consume(';');
+        return expr_node;
+    } else if (is_punctuator(';')) {
         std::vector<ASTNodePtr> next;
         next.push_back(std::move(expr_node));
         return MkNd(Expression);
@@ -1458,7 +1472,7 @@ ASTNodePtr Parser::is_labeled_statement() {
             --index_;
             return nullptr;
         }
-        parser_error;
+        parser_error();
     } else if (is_keyword(TokenType::Case)) {
         if (auto const_node = is_constant_expression()) {
             consume(':');
@@ -1468,14 +1482,14 @@ ASTNodePtr Parser::is_labeled_statement() {
                 return MkNd(LabeledStatement);
             }
         }
-        parser_error;
+        parser_error();
     } else if (is_keyword(TokenType::Default)) {
         consume(':');
         if (auto stat_node = is_statement()) {
             next.push_back(std::move(stat_node));
             return MkNd(LabeledStatement);
         }
-        parser_error;
+        parser_error();
     }
     return nullptr;
 }
@@ -1492,20 +1506,19 @@ ASTNodePtr Parser::is_compound_statement() {
 }
 
 ASTNodePtr Parser::is_assignment_expression() {
-    std::vector<ASTNodePtr> next;
-    if (auto cond_node = is_conditional_expression()) {
-        next.push_back(std::move(cond_node));
-        return MkNd(AssignmentExpression);
-    } else if (auto un_node = is_unary_expression()) {
+    auto bk_index = index_;
+    if (auto un_node = is_conditional_expression()) {
+        auto op_type = get_token_type();
         if (auto assi_oper_node = is_assignment_operator()) {
+            // TODO: conditional_expression must be lvalue, otherwise error
             if (auto assi_node = is_assignment_expression()) {
-                next.push_back(std::move(un_node));
-                next.push_back(std::move(assi_oper_node));
-                next.push_back(std::move(assi_node));
-                return MkNd(AssignmentExpression);
+                return ModifyNode::Create(std::move(un_node), std::move(assi_node), TokenType::Error, TokenType::Error, op_type);
             }
+            parser_error();
         }
-        parser_error;
+        std::vector<ASTNodePtr> next;
+        next.push_back(std::move(un_node));
+        return MkNd(AssignmentExpression);
     }
     return nullptr;
 }
@@ -1524,7 +1537,7 @@ ASTNodePtr Parser::is_conditional_expression() {
                     }
                 }
             }
-            parser_error;
+            parser_error();
         }
         return MkNd(ConditionalExpression);
     }
@@ -1567,7 +1580,7 @@ ASTNodePtr Parser::is_declarator() {
             next.push_back(std::move(dir_node));
             return MkNd(Declarator);
         }
-        parser_error;
+        parser_error();
     } else if (auto dir_node = is_direct_declarator()) {
         next.push_back(std::move(dir_node));
         return MkNd(Declarator);
@@ -1604,7 +1617,7 @@ ASTNodePtr Parser::is_initializer() {
                 return MkNd(Initializer);
             }
         }
-        parser_error;
+        parser_error();
     }
     return nullptr;
 }
@@ -1633,7 +1646,7 @@ ASTNodePtr Parser::is_parameter_type_list() {
                 next.push_back(std::move(ellipsis));
                 return MkNd(ParameterTypeList);
             }
-            parser_error;
+            parser_error();
         } else {
             return MkNd(ParameterTypeList);
         }
@@ -1783,13 +1796,15 @@ bool Parser::advance_if(bool adv) {
 
 void Parser::consume(char c) {
     if (!is_punctuator(c)) {
-        throw std::runtime_error("Expected " + std::string(1, c) + " but got " + get_token_value());
+        std::cout << "Expected " << c << " but got " << get_token_value() << std::endl;
+        parser_error();
     }
 }
 
 void Parser::consume(TokenType t) {
     if (!advance_if(get_token_type() == t)) {
-        throw std::runtime_error("Expected " + deserialize(t) + " but got " + get_token_value());
+        std::cout << "Expected " << deserialize(t) << " but got " << get_token_value() << std::endl;
+        parser_error();
     }
 }
 

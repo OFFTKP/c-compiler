@@ -17,6 +17,7 @@ struct Global {
     VAR(std::string, CurrentPath, "")
     VAR(std::string, OutputPath, "")
     VAR(bool, CopyOutputToClipboard, false)
+    VAR(bool, ParserUnrolling, false)
     #undef VAR
 
     static void dumpLog() {

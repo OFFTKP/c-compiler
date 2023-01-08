@@ -1,5 +1,5 @@
 #include <common/qa/test_base.hxx>
-#include <common/state.hxx>
+#include <common/global.hxx>
 #include <filesystem>
 
 std::vector<std::string> TestBase::getDataFiles(std::string suffix) {

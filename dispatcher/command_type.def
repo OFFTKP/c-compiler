@@ -65,3 +65,21 @@ DEF(OUTPUT_DIR, 1, "-od", "--output-dir", "Set the output directory",
 DEF(COPY_TO_CLIPBOARD, 1, "-c", "--copy", "Copy the output to the clipboard",
     Global::GetCopyOutputToClipboard() = true;
 )
+
+DEF(PLACEHOLDER, 0, "-x", "--placeholder", "Placeholder",
+    auto cur = "/home/offtkp/parseme.c";
+    if (std::filesystem::is_regular_file(cur)) {
+        std::ifstream ifs(cur);
+        std::stringstream ssrc;
+        ssrc << ifs.rdbuf();
+        std::string src = ssrc.str();
+        Parser parser(src);
+        try {
+            parser.is_block_item();
+        } catch (...) {
+            parser.find_error();
+        }
+    } else {
+        ERROR("File not found: " << cur);
+    }
+)
