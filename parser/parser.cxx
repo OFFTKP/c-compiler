@@ -152,13 +152,11 @@ ASTNodePtr Parser::is_function_definition() {
 }
 
 ASTNodePtr Parser::is_block_item() {
-    std::vector<ASTNodePtr> next;
     if (auto decl_node = is_declaration()) {
-        next.push_back(std::move(decl_node));
+        return decl_node;
     } else if (auto stat_node = is_statement()) {
-        next.push_back(std::move(stat_node));
+        return stat_node;
     } else return nullptr;
-    return MkNd(BlockItem);
 }
 
 ASTNodePtr Parser::is_type_specifier() {
@@ -354,8 +352,8 @@ ASTNodePtr Parser::is_block_item_list() {
     if (auto item_node = is_block_item()) {
         if (auto list_node = _is_block_item_list()) {
             next.push_back(std::move(item_node));
-            next.push_back(std::move(list_node));
-            return MkNd(BlockItemList);
+            if (!list_node->IsEmpty()) next.push_back(std::move(list_node));
+            return BlockItemListNode::Create(MkNd(BlockItemList));
         }
         parser_error();
     }
@@ -367,7 +365,7 @@ ASTNodePtr Parser::_is_block_item_list() {
     if (auto item_node = is_block_item()) {
         if (auto list_node = _is_block_item_list()) {
             next.push_back(std::move(item_node));
-            next.push_back(std::move(list_node));
+            if (!list_node->IsEmpty()) next.push_back(std::move(list_node));
             return MkNd(BlockItemList);
         }
         parser_error();
@@ -520,6 +518,7 @@ ASTNodePtr Parser::is_shift_expression() {
     std::vector<ASTNodePtr> next;
     if (auto expr_node = is_additive_expression()) {
         if (auto expr_node2 = _is_shift_expression()) {
+            if (expr_node2->IsEmpty()) return expr_node;
             next.push_back(std::move(expr_node));
             next.push_back(std::move(expr_node2));
             return MkNd(ShiftExpression);
@@ -534,6 +533,7 @@ ASTNodePtr Parser::_is_shift_expression() {
     if (is_keyword(TokenType::LeftOp) || is_keyword(TokenType::RightOp)) {
         if (auto expr_node = is_additive_expression()) {
             if (auto expr_node2 = _is_shift_expression()) {
+                if (expr_node2->IsEmpty()) return expr_node;
                 next.push_back(std::move(expr_node));
                 next.push_back(std::move(expr_node2));
                 return MkNd(ShiftExpression);
@@ -548,6 +548,7 @@ ASTNodePtr Parser::is_additive_expression() {
     std::vector<ASTNodePtr> next;
     if (auto expr_node = is_multiplicative_expression()) {
         if (auto expr_node2 = _is_additive_expression()) {
+            if (expr_node2->IsEmpty()) return expr_node;
             next.push_back(std::move(expr_node));
             next.push_back(std::move(expr_node2));
             return MkNd(AdditiveExpression);
@@ -562,6 +563,7 @@ ASTNodePtr Parser::_is_additive_expression() {
     if (is_punctuator('+') || is_punctuator('-')) {
         if (auto expr_node = is_multiplicative_expression()) {
             if (auto expr_node2 = _is_additive_expression()) {
+                if (expr_node2->IsEmpty()) return expr_node;
                 next.push_back(std::move(expr_node));
                 next.push_back(std::move(expr_node2));
                 return MkNd(AdditiveExpression);
@@ -576,6 +578,7 @@ ASTNodePtr Parser::is_multiplicative_expression() {
     std::vector<ASTNodePtr> next;
     if (auto expr_node = is_cast_expression()) {
         if (auto expr_node2 = _is_multiplicative_expression()) {
+            if (expr_node2->IsEmpty()) return expr_node;
             next.push_back(std::move(expr_node));
             next.push_back(std::move(expr_node2));
             return MkNd(MultiplicativeExpression);
@@ -590,6 +593,7 @@ ASTNodePtr Parser::_is_multiplicative_expression() {
     if (is_punctuator('*') || is_punctuator('/') || is_punctuator('%')) {
         if (auto expr_node = is_cast_expression()) {
             if (auto expr_node2 = _is_multiplicative_expression()) {
+                if (expr_node2->IsEmpty()) return expr_node;
                 next.push_back(std::move(expr_node));
                 next.push_back(std::move(expr_node2));
                 return MkNd(MultiplicativeExpression);
@@ -731,6 +735,7 @@ ASTNodePtr Parser::is_expression() {
     std::vector<ASTNodePtr> next;
     if (auto expr_node = is_assignment_expression()) {
         if (auto list_node = _is_expression()) {
+            if (list_node->IsEmpty()) return expr_node;
             next.push_back(std::move(expr_node));
             next.push_back(std::move(list_node));
             return MkNd(Expression);
@@ -745,6 +750,7 @@ ASTNodePtr Parser::_is_expression() {
     if (is_punctuator(',')) {
         if (auto expr_node = is_assignment_expression()) {
             if (auto list_node = _is_expression()) {
+                if (list_node->IsEmpty()) return expr_node;
                 next.push_back(std::move(expr_node));
                 next.push_back(std::move(list_node));
                 return MkNd(Expression);
@@ -759,6 +765,7 @@ ASTNodePtr Parser::is_direct_declarator() {
     std::vector<ASTNodePtr> next;
     if (auto id = is_identifier()) {
         if (auto list_node = _is_direct_declarator()) {
+            if (list_node->IsEmpty()) return id;
             next.push_back(std::move(id));
             next.push_back(std::move(list_node));
             return MkNd(DirectDeclarator);
@@ -767,6 +774,7 @@ ASTNodePtr Parser::is_direct_declarator() {
         if (auto decl_node = is_declarator()) {
             consume(')');
             if (auto list_node = _is_direct_declarator()) {
+                if (list_node->IsEmpty()) return decl_node;
                 next.push_back(std::move(decl_node));
                 next.push_back(std::move(list_node));
                 return MkNd(DirectDeclarator);
@@ -786,12 +794,12 @@ ASTNodePtr Parser::_is_direct_declarator() {
             if (type_node) next.push_back(std::move(type_node));
             if (assi_node) next.push_back(std::move(assi_node));
             auto decl_node = _is_direct_declarator();
-            if (decl_node) next.push_back(std::move(decl_node));
+            if (decl_node && !decl_node->IsEmpty()) next.push_back(std::move(decl_node));
             return MkNd(DirectDeclarator);
         } else if (is_punctuator('*')) {
             if (type_node) next.push_back(std::move(type_node));
             auto decl_node = _is_direct_declarator();
-            if (decl_node) next.push_back(std::move(decl_node));
+            if (decl_node && !decl_node->IsEmpty()) next.push_back(std::move(decl_node));
             return MkNd(DirectDeclarator);
         } else if (is_keyword(TokenType::Static)) {
             if (!type_node) type_node = is_type_qualifier_list();
@@ -800,7 +808,7 @@ ASTNodePtr Parser::_is_direct_declarator() {
                     next.push_back(std::move(type_node));
                     next.push_back(std::move(assi_node));
                     auto decl_node = _is_direct_declarator();
-                    if (decl_node) next.push_back(std::move(decl_node));
+                    if (decl_node && !decl_node->IsEmpty()) next.push_back(std::move(decl_node));
                     return MkNd(DirectDeclarator);
                 }
             }
@@ -811,7 +819,7 @@ ASTNodePtr Parser::_is_direct_declarator() {
             consume(')');
             if (auto list_node = _is_direct_declarator()) {
                 next.push_back(std::move(param_node));
-                next.push_back(std::move(list_node));
+                if (!list_node->IsEmpty())next.push_back(std::move(list_node));
                 return MkNd(DirectDeclarator);
             }
         } else {
@@ -819,7 +827,7 @@ ASTNodePtr Parser::_is_direct_declarator() {
             if (is_punctuator(')')) {
                 if (auto list_node = _is_direct_declarator()) {
                     if (id_list_node) next.push_back(std::move(id_list_node));
-                    next.push_back(std::move(list_node));
+                    if (!list_node->IsEmpty()) next.push_back(std::move(list_node));
                     return MkNd(DirectDeclarator);
                 }
             }
@@ -832,6 +840,7 @@ ASTNodePtr Parser::is_relational_expression() {
     std::vector<ASTNodePtr> next;
     if (auto shift_node = is_shift_expression()) {
         if (auto rel_node = _is_relational_expression()) {
+            if (rel_node->IsEmpty()) return shift_node;
             next.push_back(std::move(shift_node));
             next.push_back(std::move(rel_node));
             return MkNd(RelationalExpression);
@@ -845,6 +854,7 @@ ASTNodePtr Parser::_is_relational_expression() {
     if (is_keyword(TokenType::LeOp) || is_keyword(TokenType::GeOp) || is_punctuator('<') || is_punctuator('>')) {
         if (auto shift_node = is_shift_expression()) {
             if (auto rel_node = _is_relational_expression()) {
+                if (rel_node->IsEmpty()) return shift_node;
                 next.push_back(std::move(shift_node));
                 next.push_back(std::move(rel_node));
                 return MkNd(RelationalExpression);
@@ -859,6 +869,7 @@ ASTNodePtr Parser::is_equality_expression() {
     std::vector<ASTNodePtr> next;
     if (auto rel_node = is_relational_expression()) {
         if (auto eq_node = _is_equality_expression()) {
+            if (eq_node->IsEmpty()) return rel_node;
             next.push_back(std::move(rel_node));
             next.push_back(std::move(eq_node));
             return MkNd(EqualityExpression);
@@ -872,6 +883,7 @@ ASTNodePtr Parser::_is_equality_expression() {
     if (is_keyword(TokenType::EqOp) || is_keyword(TokenType::NeOp)) {
         if (auto rel_node = is_relational_expression()) {
             if (auto eq_node = _is_equality_expression()) {
+                if (eq_node->IsEmpty()) return rel_node;
                 next.push_back(std::move(rel_node));
                 next.push_back(std::move(eq_node));
                 return MkNd(EqualityExpression);
@@ -886,6 +898,7 @@ ASTNodePtr Parser::is_and_expression() {
     std::vector<ASTNodePtr> next;
     if (auto eq_node = is_equality_expression()) {
         if (auto and_node = _is_and_expression()) {
+            if (and_node->IsEmpty()) return eq_node;
             next.push_back(std::move(eq_node));
             next.push_back(std::move(and_node));
             return MkNd(AndExpression);
@@ -899,6 +912,7 @@ ASTNodePtr Parser::_is_and_expression() {
     if (is_punctuator('&')) {
         if (auto eq_node = is_equality_expression()) {
             if (auto and_node = _is_and_expression()) {
+                if (and_node->IsEmpty()) return eq_node;
                 next.push_back(std::move(eq_node));
                 next.push_back(std::move(and_node));
                 return MkNd(AndExpression);
@@ -913,6 +927,7 @@ ASTNodePtr Parser::is_xor_expression() {
     std::vector<ASTNodePtr> next;
     if (auto and_node = is_and_expression()) {
         if (auto xor_node = _is_xor_expression()) {
+            if (xor_node->IsEmpty()) return and_node;
             next.push_back(std::move(and_node));
             next.push_back(std::move(xor_node));
             return MkNd(ExclusiveOrExpression);
@@ -926,6 +941,7 @@ ASTNodePtr Parser::_is_xor_expression() {
     if (is_punctuator('^')) {
         if (auto and_node = is_and_expression()) {
             if (auto xor_node = _is_xor_expression()) {
+                if (xor_node->IsEmpty()) return and_node;
                 next.push_back(std::move(and_node));
                 next.push_back(std::move(xor_node));
                 return MkNd(ExclusiveOrExpression);
@@ -940,6 +956,7 @@ ASTNodePtr Parser::is_or_expression() {
     std::vector<ASTNodePtr> next;
     if (auto xor_node = is_xor_expression()) {
         if (auto or_node = _is_or_expression()) {
+            if (or_node->IsEmpty()) return xor_node;
             next.push_back(std::move(xor_node));
             next.push_back(std::move(or_node));
             return MkNd(InclusiveOrExpression);
@@ -953,6 +970,7 @@ ASTNodePtr Parser::_is_or_expression() {
     if (is_punctuator('|')) {
         if (auto xor_node = is_xor_expression()) {
             if (auto or_node = _is_or_expression()) {
+                if (or_node->IsEmpty()) return xor_node;
                 next.push_back(std::move(xor_node));
                 next.push_back(std::move(or_node));
                 return MkNd(InclusiveOrExpression);
@@ -967,6 +985,7 @@ ASTNodePtr Parser::is_logical_and_expression() {
     std::vector<ASTNodePtr> next;
     if (auto or_node = is_or_expression()) {
         if (auto and_node = _is_logical_and_expression()) {
+            if (and_node->IsEmpty()) return or_node;
             next.push_back(std::move(or_node));
             next.push_back(std::move(and_node));
             return MkNd(LogicalAndExpression);
@@ -980,6 +999,7 @@ ASTNodePtr Parser::_is_logical_and_expression() {
     if (is_keyword(TokenType::AndOp)) {
         if (auto or_node = is_or_expression()) {
             if (auto and_node = _is_logical_and_expression()) {
+                if (and_node->IsEmpty()) return or_node;
                 next.push_back(std::move(or_node));
                 next.push_back(std::move(and_node));
                 return MkNd(LogicalAndExpression);
@@ -994,6 +1014,7 @@ ASTNodePtr Parser::is_logical_or_expression() {
     std::vector<ASTNodePtr> next;
     if (auto and_node = is_logical_and_expression()) {
         if (auto or_node = _is_logical_or_expression()) {
+            if (or_node->IsEmpty()) return and_node;
             next.push_back(std::move(and_node));
             next.push_back(std::move(or_node));
             return MkNd(LogicalOrExpression);
@@ -1007,6 +1028,7 @@ ASTNodePtr Parser::_is_logical_or_expression() {
     if (is_keyword(TokenType::OrOp)) {
         if (auto and_node = is_logical_and_expression()) {
             if (auto or_node = _is_logical_or_expression()) {
+                if (or_node->IsEmpty()) return and_node;
                 next.push_back(std::move(and_node));
                 next.push_back(std::move(or_node));
                 return MkNd(LogicalOrExpression);
@@ -1021,8 +1043,9 @@ ASTNodePtr Parser::is_postfix_expression() {
     std::vector<ASTNodePtr> next;
     if (auto pr_node = is_primary_expression()) {
         if (auto pr_node2 = _is_postfix_expression()) {
+            if (pr_node2->IsEmpty()) return pr_node;
             next.push_back(std::move(pr_node));
-            if (!pr_node2->IsEmpty()) next.push_back(std::move(pr_node2));
+            next.push_back(std::move(pr_node2));
             return MkNd(PostfixExpression);
         }
     } else if (is_punctuator('(')) {
@@ -1125,8 +1148,7 @@ ASTNodePtr Parser::is_cast_expression() {
             }
         }
     } else if (auto un_node = is_unary_expression()) {
-        next.push_back(std::move(un_node));
-        return MkNd(CastExpression);
+        return un_node;
     }
     return nullptr;
 }
@@ -1134,8 +1156,7 @@ ASTNodePtr Parser::is_cast_expression() {
 ASTNodePtr Parser::is_unary_expression() {
     std::vector<ASTNodePtr> next;
     if (auto post_node = is_postfix_expression()) {
-        next.push_back(std::move(post_node));
-        return MkNd(UnaryExpression);
+        return post_node;
     } else if (is_keyword(TokenType::IncOp) || is_keyword(TokenType::DecOp)) {
         if (auto un_node = is_unary_expression()) {
             next.push_back(std::move(un_node));
@@ -1237,21 +1258,16 @@ ASTNodePtr Parser::is_declaration() {
 }
 
 ASTNodePtr Parser::is_primary_expression() {
-    std::vector<ASTNodePtr> next;
     if (auto id_node = is_identifier()) {
-        next.push_back(std::move(id_node));
-        return MkNd(PrimaryExpression);
+        return id_node;
     } else if (auto num_node = is_constant()) {
-        next.push_back(std::move(num_node));
-        return MkNd(PrimaryExpression);
+        return num_node;
     } else if (auto str_node = is_string_literal()) {
-        next.push_back(std::move(str_node));
-        return MkNd(PrimaryExpression);
+        return str_node;
     } else if (is_punctuator('(')) {
         if (auto expr_node = is_expression()) {
             consume(')');
-            next.push_back(std::move(expr_node));
-            return MkNd(PrimaryExpression);
+            return expr_node;
         }
         parser_error();
     }
@@ -1307,21 +1323,19 @@ ASTNodePtr Parser::is_statement_list() {
 }
 
 ASTNodePtr Parser::is_statement() {
-    std::vector<ASTNodePtr> next;
     if (auto l_stat_node = is_labeled_statement()) {
-        next.push_back(std::move(l_stat_node));
+        return l_stat_node;
     } else if (auto c_stat_node = is_compound_statement()) {
-        next.push_back(std::move(c_stat_node));
+        return c_stat_node;
     } else if (auto e_stat_node = is_expression_statement()) {
-        next.push_back(std::move(e_stat_node));
+        return e_stat_node;
     } else if (auto s_stat_node = is_selection_statement()) {
-        next.push_back(std::move(s_stat_node));
+        return s_stat_node;
     } else if (auto i_stat_node = is_iteration_statement()) {
-        next.push_back(std::move(i_stat_node));
+        return i_stat_node;
     } else if (auto j_stat_node = is_jump_statement()) {
-        next.push_back(std::move(j_stat_node));
+        return j_stat_node;
     } else return nullptr;
-    return MkNd(Statement);
 }
 
 ASTNodePtr Parser::is_selection_statement() {
@@ -1512,13 +1526,11 @@ ASTNodePtr Parser::is_assignment_expression() {
         if (auto assi_oper_node = is_assignment_operator()) {
             // TODO: conditional_expression must be lvalue, otherwise error
             if (auto assi_node = is_assignment_expression()) {
-                return ModifyNode::Create(std::move(un_node), std::move(assi_node), TokenType::Error, TokenType::Error, op_type);
+                return ModifyExpressionNode::Create(std::move(un_node), std::move(assi_node), TokenType::Error, TokenType::Error, op_type);
             }
             parser_error();
         }
-        std::vector<ASTNodePtr> next;
-        next.push_back(std::move(un_node));
-        return MkNd(AssignmentExpression);
+        return un_node;
     }
     return nullptr;
 }
@@ -1526,11 +1538,11 @@ ASTNodePtr Parser::is_assignment_expression() {
 ASTNodePtr Parser::is_conditional_expression() {
     std::vector<ASTNodePtr> next;
     if (auto or_node = is_logical_or_expression()) {
-        next.push_back(std::move(or_node));
         if (is_punctuator('?')) {
             if (auto expr_node = is_expression()) {
                 if (is_punctuator(':')) {
                     if (auto cond_node = is_conditional_expression()) {
+                        next.push_back(std::move(or_node));
                         next.push_back(std::move(expr_node));
                         next.push_back(std::move(cond_node));
                         return MkNd(ConditionalExpression);
@@ -1539,7 +1551,7 @@ ASTNodePtr Parser::is_conditional_expression() {
             }
             parser_error();
         }
-        return MkNd(ConditionalExpression);
+        return or_node;
     }
     return nullptr;
 }
@@ -1582,8 +1594,7 @@ ASTNodePtr Parser::is_declarator() {
         }
         parser_error();
     } else if (auto dir_node = is_direct_declarator()) {
-        next.push_back(std::move(dir_node));
-        return MkNd(Declarator);
+        return dir_node;
     }
     return nullptr;
 }

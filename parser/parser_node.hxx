@@ -62,19 +62,36 @@ private:
     std::string unique_name_;
 };
 
-struct ModifyNode : public ASTNode {
-    ModifyNode() : ASTNode(ASTNodeType::ModifyExpression, {}) {}
+struct ModifyExpressionNode : public ASTNode {
+    ModifyExpressionNode() : ASTNode(ASTNodeType::ModifyExpression, {}) {}
     ASTNodePtr LHS, RHS;
     TokenType LHSType, RHSType;
     TokenType Op;
 
     static ASTNodePtr Create(ASTNodePtr lhs, ASTNodePtr rhs, TokenType lhstype, TokenType rhstype, TokenType op) {
-        auto node = std::make_unique<ModifyNode>();
+        auto node = std::make_unique<ModifyExpressionNode>();
         node->LHS = std::move(lhs);
         node->RHS = std::move(rhs);
         node->LHSType = lhstype;
         node->RHSType = rhstype;
         node->Op = op;
+        return node;
+    }
+};
+
+struct BlockItemListNode : public ASTNode {
+    BlockItemListNode() : ASTNode(ASTNodeType::BlockItemList, {}) {}
+    static ASTNodePtr Create(ASTNodePtr first) {
+        // Squash the list into a single node
+        auto node = std::make_unique<BlockItemListNode>();
+        auto cur_node = first.get();
+        while (true) {
+            node->Next.push_back(std::move(cur_node->Next[0]));
+            if (cur_node->Next.size() == 1) {
+                break;
+            }
+            cur_node = cur_node->Next[1].get();
+        }
         return node;
     }
 };
