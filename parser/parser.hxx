@@ -106,6 +106,7 @@ public:
     // consume(...) functions are the same as is_...() functions
     // but if the token is not the expected one, it will throw an exception
     bool is_punctuator(char c);
+    bool check_punctuator(char c);
     void consume(char c);
     bool is_keyword(TokenType t);
     void consume(TokenType t);
@@ -114,11 +115,13 @@ public:
         return std::ranges::find(many, type) != many.end();
     }
 
-    TokenType get_token_type();
+    TokenType get_token_type(int offset = 0);
     std::string get_token_value();
     std::string get_unique_name(std::string);
     bool advance_if(bool adv);
     bool type_defined(const std::string& type);
+    using func_ptr = ASTNodePtr (Parser::*)();
+    bool check_ahead(func_ptr aptr, int offset = 0);
     const std::string& input_;
     std::vector<Token> tokens_;
     std::vector<Token>::const_iterator index_;

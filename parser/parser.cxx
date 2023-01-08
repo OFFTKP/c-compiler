@@ -220,6 +220,10 @@ bool Parser::is_punctuator(char c) {
     return advance_if(get_token_type() == TokenType::Punctuator && get_token_value()[0] == c);
 }
 
+bool Parser::check_punctuator(char c) {
+    return get_token_type() == TokenType::Punctuator && get_token_value()[0] == c;
+}
+
 bool Parser::is_keyword(TokenType t) {
     return advance_if(get_token_type() == t);
 }
@@ -1125,15 +1129,19 @@ ASTNodePtr Parser::is_designation() {
 
 ASTNodePtr Parser::is_cast_expression() {
     std::vector<ASTNodePtr> next;
-    if (is_punctuator('(')) {
-        if (auto type_node = is_type_name()) {
-            if (is_punctuator(')')) {
+    bool next_is_type = check_ahead(&Parser::is_type_name, 1);
+    if (check_punctuator('(') && next_is_type) {
+        if (next_is_type) {
+            consume('(');
+            if (auto type_node = is_type_name()) {
+                consume(')');
                 if (auto cast_node = is_cast_expression()) {
                     next.push_back(std::move(type_node));
                     next.push_back(std::move(cast_node));
                     return MkNd(CastExpression);
                 }
             }
+            parser_error();
         }
     } else if (auto un_node = is_unary_expression()) {
         return un_node;
@@ -1780,8 +1788,18 @@ std::string Parser::get_unique_name(std::string name) {
     return unique_name;
 }
 
-TokenType Parser::get_token_type() {
-    return std::get<0>(*index_);
+TokenType Parser::get_token_type(int offset) {
+    index_ += offset;
+    auto ret = std::get<0>(*index_);
+    index_ -= offset;
+    return ret;
+}
+
+bool Parser::check_ahead(func_ptr aptr, int offset) {
+    index_ += offset;
+    auto ret = (this->*aptr)();
+    index_ -= offset;
+    return ret != nullptr;
 }
 
 std::string Parser::get_token_value() {
